@@ -1,2 +1,2 @@
-isl1_sib_counts_10X/
-*.tsv
+/data/isl1_sib_counts_10X/
+/data/*.tsv

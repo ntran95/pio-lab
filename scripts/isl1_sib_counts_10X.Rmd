@@ -1,0 +1,92 @@
+---
+title: 'scRNA-seq Analysis of 10X Homeostatic Sample isl1_sib'
+author: "Nicole Tran"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document: default
+  pdf_document: default
+  fig_caption: yes
+  pdf_document': default
+---
+
+```{r, setup}
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+
+#install.packages("Seurat")
+library(Seurat)
+library(plotly)
+#install.packages("future")
+library(future)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(gridExtra)
+library(ggrepel)
+options(future.globals.maxSize = 5000 * 1024^2)
+
+setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
+```
+
+```{r, data}
+#load in isl1_sib_counts_10X dir containing count matrix
+#files in this folder should be in .gz format
+isl1_sib_10X.data <- Read10X(data.dir = "../data/isl1_sib_counts_10X/")
+
+homeo.isl1_sib_10X <- CreateSeuratObject(counts = isl1_sib_10X.data, project = "homeo.isl1.sib.10X", min.cells = 1, min.features = 1)
+
+homeo.isl1_sib_10X
+```
+#### Standard pre-processing workflow
+
+```{r, mt}
+#calculate mitochondrial contamination
+#do not add suffix to identify sample in "percent.mt" for metadata, will cause convergance issues in downstream integration with multiple datasets
+homeo.isl1_sib_10X[["percent.mt"]] <- PercentageFeatureSet(homeo.isl1_sib_10X, pattern = "^mt-")
+
+```
+
+#### QC metrics
+
+```nFeature_RNA``` is the number of genes detected in each cell. 
+
+```nCount_RNA``` is the total number of molecules detected within a cell. 
+
+Low ```nFeature_RNA``` for a cell indicates that it may be dead/dying or an empty droplet. 
+
+High ```nCount_RNA``` and/or ```nFeature_RNA``` indicates that the "cell" may in fact be a doublet (or multiplet). 
+
+```{r, vln, fig.height=20}
+#vlnplots of number of genes, molecule count, and mitochondrial % in cell
+#summary tables used to determine minimal lower threshold nCounts_RNA for subsetting
+
+#nFeature_RNA
+#will not be delimitting threshold for nFeature_RNA, we want all possible genes
+nFeature.vln.homeo.isl1.sib.10X <-VlnPlot(object = homeo.isl1_sib_10X, features = "nFeature_RNA") + geom_hline(yintercept = 2500, color = 'red')
+summary(homeo.isl1_sib_10X$nFeature_RNA)
+
+#nCount_RNA
+nCount.vln.homeo.isl1.sib.10X <- VlnPlot(object = homeo.isl1_sib_10X, features = "nCount_RNA") + ylim(0, 15000) + geom_hline(yintercept = 10000, color = 'red')
+summary(homeo.isl1_sib_10X$nCount_RNA)
+
+#percent.mito %
+pct.mito.vln.homeo.isl1.sib.10X <- VlnPlot(object = homeo.isl1_sib_10X, features = "percent.mt") + geom_hline(yintercept = 10, color = 'red')
+summary(homeo.isl1_sib_10X$percent.mt)
+
+#CombinePlots(plots = list(nFeature.vln.homeo.isl1.sib.10X + nCount.vln.homeo.isl1.sib.10X + pct.mito.vln.homeo.isl1.sib.10X), ncol = 3)
+
+nFeature.vln.homeo.isl1.sib.10X + nCount.vln.homeo.isl1.sib.10X + pct.mito.vln.homeo.isl1.sib.10X
+```
+
+```{r, fig.width = 10, featurescatter}
+featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X <- FeatureScatter(homeo.isl1_sib_10X, feature1 = "nCount_RNA", feature2 = "percent.mt") + xlim(0, 15000)
+featurescatter.nCountXnFeature.homeo.isl1.sib.10X <- FeatureScatter(homeo.isl1_sib_10X, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") + xlim(0, 15000)
+featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X + featurescatter.nCountXnFeature.homeo.isl1.sib.10X
+
+```
+
+#### Subsetting
+
+```{r, subset}
+#homeo.isl1_sib_10X <- subset()
+```

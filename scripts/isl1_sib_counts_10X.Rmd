@@ -99,16 +99,21 @@ featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X + featurescatter.nCountXnFea
 
 ```{r, subset}
 #subsetting parameters: omit cells with genes less than 3000 and greater than 200. omit mitochondrial contamination greater than 10%. omit cells with molecules greater than 10,000
-homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10 & nCount_RNA < 10000)
+homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
 
 homeo.isl1_sib_10X
 #2979 cells preserved from 17713 in original data
 ```
 
+Noticable increase in cells/samples from 2979 to ~16000 using an alternative subsetting parameter:
+```homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10 & nCount_RNA <10000)```
+
+
 ```{r, normalize}
 #call the plan() function to initiate the multiprocess/parallelization for NormalizeData()
 plan("multiprocess")
-pbmc <- NormalizeData(homeo.isl1_sib_10X, normalization.method = "LogNormalize", scale.factor = 10000, verbose = TRUE)
+homeo.isl1_sib_10X <- NormalizeData(homeo.isl1_sib_10X, normalization.method = "LogNormalize", scale.factor = 10000, verbose = TRUE)
+#mutliprocess for NormalizationData using 1G is executable, not same case for ScaleData()
 ```
 
 ```{r, FindVariableFeatures}
@@ -135,10 +140,22 @@ test<- all.genes %in% all.genes[duplicated(all.genes)]
 sum(grepl(pattern = "TRUE", x = test))
 
 plan("sequential")
+#options(future.globals.maxSize = 3500 * 1024^2)
+#plan("multiprocess")
 homeo.isl1_sib_10X <- ScaleData(homeo.isl1_sib_10X, features = all.genes, vars.to.regress = "percent.mt", verbose = TRUE)
 ```
 
+Error in getGlobalsAndPackages(expr, envir = envir, globals = globals) : 
+  The total size of the 11 globals that need to be exported for the future expression (‘FUN()’) is 3.18 GiB. This exceeds the maximum allowed size of 0.98 GiB (option 'future.globals.maxSize'). The three largest globals are ‘object’ (3.17 GiB of class ‘numeric’), ‘features’ (1.67 MiB of class ‘character’) and ‘split.cells’ (1.39 MiB of class ‘list’).
+  
+  Formerally using set future.global to 1G, change to 3.5G however activit usage on local mac is using 6G/8G. If R session aborts, will have to resort to "sequential" and fargo parallelization.
 ```{r, save}
-saved.ls <- ls
-saveRDS(saved.ls, file ="../data/saved_environment_homeo.isl1_sib_10X.rds")
+#default save RData env
+save.image("../data/workspace_homeo_isl1_sib_10X.RData")
+#3.1G, this seems to be the correct way
+```
+
+```{r, RunPCA}
+#default pc is set to 100
+homeo.isl1_sib_10X <- RunPCA(homeo.isl1_sib_10X, npcs = 100, verbose = TRUE, features = all.genes)
 ```

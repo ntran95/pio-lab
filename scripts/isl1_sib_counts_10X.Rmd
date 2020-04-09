@@ -23,7 +23,7 @@ library(ggplot2)
 library(cowplot)
 library(gridExtra)
 library(ggrepel)
-options(future.globals.maxSize = 5000 * 1024^2)
+options(future.globals.maxSize = 1000 * 1024^2)
 
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
 ```
@@ -112,13 +112,6 @@ pbmc <- NormalizeData(homeo.isl1_sib_10X, normalization.method = "LogNormalize",
 ```
 
 ```{r, FindVariableFeatures}
-all.genes <- rownames(homeo.isl1_sib_10X)
-#25622 genes total
-#another method of accessing unique, nonduplciated gene symbols in counts data.
-#returns 0 if there are no duplicates
-test<- all.genes %in% all.genes[duplicated(all.genes)] 
-sum(grepl(pattern = "TRUE", x = test))
-
 #Identification of highly variable genes
 homeo.isl1_sib_10X <- FindVariableFeatures(homeo.isl1_sib_10X, selection.method = "vst", nfeatures = 2000)
 
@@ -127,8 +120,25 @@ top10 <- head(VariableFeatures(homeo.isl1_sib_10X), 10)
 
 #plot 2000 variable features with labels on top 10 most variable genes
 VariableFeatureplot1.homeo.isl1_sib_10X <- VariableFeaturePlot(homeo.isl1_sib_10X) 
-VariableFeature.labedlplot2.homeo.isl1_sib_10X <- LabelPoints(plot = plot1, points = top10, repel = TRUE) + ggtitle("Top 10 Variable Genes ")
+VariableFeature.labedlplot2.homeo.isl1_sib_10X <- LabelPoints(plot = VariableFeatureplot1.homeo.isl1_sib_10X, points = top10, repel = TRUE) + ggtitle("Top 10 Variable Genes Using VariableFeaturePlot")
 
 VariableFeature.labedlplot2.homeo.isl1_sib_10X
 
+```
+
+```{r, scale}
+all.genes <- rownames(homeo.isl1_sib_10X)
+#25622 genes total
+#another method of accessing unique, nonduplciated gene symbols in counts data.
+#returns 0 if there are no duplicates
+test<- all.genes %in% all.genes[duplicated(all.genes)] 
+sum(grepl(pattern = "TRUE", x = test))
+
+plan("sequential")
+homeo.isl1_sib_10X <- ScaleData(homeo.isl1_sib_10X, features = all.genes, vars.to.regress = "percent.mt", verbose = TRUE)
+```
+
+```{r, save}
+saved.ls <- ls
+saveRDS(saved.ls, file ="../data/saved_environment_homeo.isl1_sib_10X.rds")
 ```

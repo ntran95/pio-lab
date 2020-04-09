@@ -186,10 +186,31 @@ homeo.isl1_sib_10X <- JackStraw(homeo.isl1_sib_10X, num.replicate = 100)
 homeo.isl1_sib_10X <- ScoreJackStraw(homeo.isl1_sib_10X, dims = 1:20)
 JackStrawPlot.PC20.homeo.isl1_sib_10X<- JackStrawPlot(homeo.isl1_sib_10X, dims = 1:20)
 ```
-Showing less statistical significance past >18 PC. Will set PC to 17
+Showing less statistical significance past >18 PC. Will set PC to 15
 
-### Clustering
+### Clustering/UMAP
 
 ```{r, cluster}
+homeo.isl1_sib_10X <- FindNeighbors(homeo.isl1_sib_10X, dims = 1:15, features = all.genes)
+
+homeo.isl1_sib_10X <- FindClusters(homeo.isl1_sib_10X, resolution = 1.2)
+
+homeo.isl1_sib_10X <- RunUMAP(homeo.isl1_sib_10X, dims = 1:15, reduction = "pca")
+
+DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE) 
+
 
 ```
+
+PC 15 with resolution 1.2, 14 clusters: gave pretty neat cluster, some single cells outside their prespective groupings however no striking outliers
+
+```{r}
+save.image("../data/workspace_homeo_isl1_sib_10X.RData")
+```
+
+### Annotate Clusters
+
+```{r}
+
+```
+

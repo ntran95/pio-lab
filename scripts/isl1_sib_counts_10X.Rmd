@@ -62,20 +62,30 @@ High ```nCount_RNA``` and/or ```nFeature_RNA``` indicates that the "cell" may in
 
 #nFeature_RNA
 #will not be delimitting threshold for nFeature_RNA, we want all possible genes
-nFeature.vln.homeo.isl1.sib.10X <-VlnPlot(object = homeo.isl1_sib_10X, features = "nFeature_RNA") + geom_hline(yintercept = 2500, color = 'red')
+nFeature.vln.homeo.isl1.sib.10X <-VlnPlot(object = homeo.isl1_sib_10X, features = "nFeature_RNA") + geom_hline(yintercept = 3000, color = 'red') + geom_hline(yintercept = 200, color = 'red') +  scale_y_continuous(breaks=c(200, 3000))
 summary(homeo.isl1_sib_10X$nFeature_RNA)
 
 #nCount_RNA
-nCount.vln.homeo.isl1.sib.10X <- VlnPlot(object = homeo.isl1_sib_10X, features = "nCount_RNA") + ylim(0, 15000) + geom_hline(yintercept = 10000, color = 'red')
+nCount.vln.homeo.isl1.sib.10X <- VlnPlot(object = homeo.isl1_sib_10X, features = "nCount_RNA") + ylim(0, 15000) + geom_hline(yintercept = 10000, color = 'red') 
+nCount.vln.homeo.isl1.sib.10X
 summary(homeo.isl1_sib_10X$nCount_RNA)
 
 #percent.mito %
-pct.mito.vln.homeo.isl1.sib.10X <- VlnPlot(object = homeo.isl1_sib_10X, features = "percent.mt") + geom_hline(yintercept = 10, color = 'red')
+pct.mito.vln.homeo.isl1.sib.10X <- VlnPlot(object = homeo.isl1_sib_10X, features = "percent.mt") + geom_hline(yintercept = 10, color = 'red') + scale_y_continuous(breaks=10)
 summary(homeo.isl1_sib_10X$percent.mt)
 
 #CombinePlots(plots = list(nFeature.vln.homeo.isl1.sib.10X + nCount.vln.homeo.isl1.sib.10X + pct.mito.vln.homeo.isl1.sib.10X), ncol = 3)
 
 nFeature.vln.homeo.isl1.sib.10X + nCount.vln.homeo.isl1.sib.10X + pct.mito.vln.homeo.isl1.sib.10X
+```
+
+
+```{r}
+boxplot(homeo.isl1_sib_10X$nFeature_RNA, lwd= 2, ylim = c(0,500))
+stripchart(homeo.isl1_sib_10X$nFeature_RNA, vertical = TRUE, 
+    method = "jitter", add = TRUE, pch = 20, col = 'blue', bg= 'black')
+
+#head(homeo.isl1_sib_10X$nCount_RNA)
 ```
 
 ```{r, fig.width = 10, featurescatter}
@@ -88,5 +98,37 @@ featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X + featurescatter.nCountXnFea
 #### Subsetting
 
 ```{r, subset}
-#homeo.isl1_sib_10X <- subset()
+#subsetting parameters: omit cells with genes less than 3000 and greater than 200. omit mitochondrial contamination greater than 10%. omit cells with molecules greater than 10,000
+homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10 & nCount_RNA < 10000)
+
+homeo.isl1_sib_10X
+#2979 cells preserved from 17713 in original data
+```
+
+```{r, normalize}
+#call the plan() function to initiate the multiprocess/parallelization for NormalizeData()
+plan("multiprocess")
+pbmc <- NormalizeData(homeo.isl1_sib_10X, normalization.method = "LogNormalize", scale.factor = 10000, verbose = TRUE)
+```
+
+```{r, FindVariableFeatures}
+all.genes <- rownames(homeo.isl1_sib_10X)
+#25622 genes total
+#another method of accessing unique, nonduplciated gene symbols in counts data.
+#returns 0 if there are no duplicates
+test<- all.genes %in% all.genes[duplicated(all.genes)] 
+sum(grepl(pattern = "TRUE", x = test))
+
+#Identification of highly variable genes
+homeo.isl1_sib_10X <- FindVariableFeatures(homeo.isl1_sib_10X, selection.method = "vst", nfeatures = 2000)
+
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(homeo.isl1_sib_10X), 10)
+
+#plot 2000 variable features with labels on top 10 most variable genes
+VariableFeatureplot1.homeo.isl1_sib_10X <- VariableFeaturePlot(homeo.isl1_sib_10X) 
+VariableFeature.labedlplot2.homeo.isl1_sib_10X <- LabelPoints(plot = plot1, points = top10, repel = TRUE) + ggtitle("Top 10 Variable Genes ")
+
+VariableFeature.labedlplot2.homeo.isl1_sib_10X
+
 ```

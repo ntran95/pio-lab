@@ -155,7 +155,41 @@ save.image("../data/workspace_homeo_isl1_sib_10X.RData")
 #3.1G, this seems to be the correct way
 ```
 
+### Perform PCA
+
 ```{r, RunPCA}
 #default pc is set to 100
 homeo.isl1_sib_10X <- RunPCA(homeo.isl1_sib_10X, npcs = 100, verbose = TRUE, features = all.genes)
+
+VizDimLoadings(homeo.isl1_sib_10X, dims = 1:2, reduction = "pca")
+
+DimHeatmap(homeo.isl1_sib_10X, dims = 1:15, cells = 500, balanced = TRUE)
+
+DimPlot(homeo.isl1_sib_10X, reduction = "pca")
+
+```
+
+### Choosing PC
+```{r,scree}
+ElbowPlot(homeo.isl1_sib_10X, ndims = 50)
+
+ElbowPlot(homeo.isl1_sib_10X, ndims = 30)
+
+ElbowPlot(homeo.isl1_sib_10X, ndims = 20)
+
+```
+Scree plot shows that variance/eigenvalues in data seem to level off between 15-20 PCs. We'll get the most information within the first ~15 PCs. Use jackstraw to confirm statistical power.
+
+```{r, jackstraw}
+#dims is defaulted to 20
+homeo.isl1_sib_10X <- JackStraw(homeo.isl1_sib_10X, num.replicate = 100)
+homeo.isl1_sib_10X <- ScoreJackStraw(homeo.isl1_sib_10X, dims = 1:20)
+JackStrawPlot.PC20.homeo.isl1_sib_10X<- JackStrawPlot(homeo.isl1_sib_10X, dims = 1:20)
+```
+Showing less statistical significance past >18 PC. Will set PC to 17
+
+### Clustering
+
+```{r, cluster}
+
 ```

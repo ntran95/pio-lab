@@ -150,8 +150,8 @@ gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t
 
 #mirrored as closely in parameters to Lush, 2019. as possible (see "Quality control, dimensional reduction, and cell classification" under Methods)
 #fold change greater than 0.10, or less than 􏰀0.10
-#only return p-value <.10 (see return.thres())
-all.markers.homeo.isl1_sib_10X <- FindAllMarkers(homeo.isl1_sib_10X, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, return.thresh = 0.01, verbose = TRUE)
+#only return p-value <0.001 (see return.thres())
+all.markers.homeo.isl1_sib_10X <- FindAllMarkers(homeo.isl1_sib_10X, only.pos = FALSE, min.pct = 0.01, logfc.threshold = 0.01, return.thresh = 0.001, verbose = TRUE)
 
 #change the column name formerally called "gene" generated from FindAllMarkers() to  "Gene.name.uniq" so we can merge with gene_table
 #must have same column name in order to match genes
@@ -166,7 +166,7 @@ all.markers.homeo.isl1_sib_10X <- merge(all.markers.homeo.isl1_sib_10X, gene_tab
 #reorder df in ascending order based on cluster (col #7) and then avg_logFC (col#3)
 all.markers.homeo.isl1_sib_10X <- all.markers.homeo.isl1_sib_10X[order( all.markers.homeo.isl1_sib_10X[,7], all.markers.homeo.isl1_sib_10X[,3] ),]
 
-#top 20
+#top 50
 top_50.all.marker.homeo.isl1 <- all.markers.homeo.isl1_sib_10X %>% group_by(cluster) %>% top_n(n = 50, wt = (avg_logFC))
 
 #top 50 Heat Map

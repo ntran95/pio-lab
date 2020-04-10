@@ -1,18 +1,6 @@
----
-title: 'scRNA-seq Analysis of 10X Homeostatic Sample isl1_sib'
-author: "Nicole Tran"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-output:
-  html_document: default
-  pdf_document: default
-  fig_caption: yes
-  pdf_document': default
----
+###############################scRNA-seq Analysis of 10X Homeostatic isl1 Sibling#######################
 
-```{r, setup}
-knitr::opts_chunk$set(message = FALSE)
-knitr::opts_chunk$set(warning = FALSE)
-
+####Set up environment####
 #install.packages("Seurat")
 library(Seurat)
 library(plotly)
@@ -23,12 +11,12 @@ library(ggplot2)
 library(cowplot)
 library(gridExtra)
 library(ggrepel)
-options(future.globals.maxSize = 1000 * 1024^2)
+options(future.globals.maxSize = 5000 * 1024^2)
 
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
-```
 
-```{r, data}
+####Read in Data####
+
 #load in isl1_sib_counts_10X dir containing count matrix
 #files in this folder should be in .gz format
 isl1_sib_10X.data <- Read10X(data.dir = "../data/isl1_sib_counts_10X/")
@@ -36,27 +24,13 @@ isl1_sib_10X.data <- Read10X(data.dir = "../data/isl1_sib_counts_10X/")
 homeo.isl1_sib_10X <- CreateSeuratObject(counts = isl1_sib_10X.data, project = "homeo.isl1.sib.10X", min.cells = 1, min.features = 1)
 
 homeo.isl1_sib_10X
-```
-#### Standard pre-processing workflow
 
-```{r, mt}
+####Standard pre-processing workflow####
 #calculate mitochondrial contamination
 #do not add suffix to identify sample in "percent.mt" for metadata, will cause convergance issues in downstream integration with multiple datasets
 homeo.isl1_sib_10X[["percent.mt"]] <- PercentageFeatureSet(homeo.isl1_sib_10X, pattern = "^mt-")
 
-```
-
-#### QC metrics
-
-```nFeature_RNA``` is the number of genes detected in each cell. 
-
-```nCount_RNA``` is the total number of molecules detected within a cell. 
-
-Low ```nFeature_RNA``` for a cell indicates that it may be dead/dying or an empty droplet. 
-
-High ```nCount_RNA``` and/or ```nFeature_RNA``` indicates that the "cell" may in fact be a doublet (or multiplet). 
-
-```{r, vln, fig.height=20}
+####QC metrics-VlnPlot####
 #vlnplots of number of genes, molecule count, and mitochondrial % in cell
 #summary tables used to determine minimal lower threshold nCounts_RNA for subsetting
 
@@ -76,47 +50,32 @@ summary(homeo.isl1_sib_10X$percent.mt)
 
 #CombinePlots(plots = list(nFeature.vln.homeo.isl1.sib.10X + nCount.vln.homeo.isl1.sib.10X + pct.mito.vln.homeo.isl1.sib.10X), ncol = 3)
 
-```
-
-
-
-```{r}
+#boxplot to visulize lower bound outliers in nFeature, set threshold to ~200
 boxplot(homeo.isl1_sib_10X$nFeature_RNA, lwd= 2, ylim = c(0,500))
 stripchart(homeo.isl1_sib_10X$nFeature_RNA, vertical = TRUE, 
-    method = "jitter", add = TRUE, pch = 20, col = 'blue', bg= 'black')
+           method = "jitter", add = TRUE, pch = 20, col = 'blue', bg= 'black')
 
 #head(homeo.isl1_sib_10X$nCount_RNA)
-```
 
-```{r, fig.width = 10, featurescatter}
+####QC metrics-FeatureScatter####
 featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X <- FeatureScatter(homeo.isl1_sib_10X, feature1 = "nCount_RNA", feature2 = "percent.mt") + xlim(0, 15000)
 featurescatter.nCountXnFeature.homeo.isl1.sib.10X <- FeatureScatter(homeo.isl1_sib_10X, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") + xlim(0, 15000)
 featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X + featurescatter.nCountXnFeature.homeo.isl1.sib.10X
 
-```
-
-#### Subsetting
-
-```{r, subset}
+####Subsetting####
 #subsetting parameters: omit cells with genes less than 3000 and greater than 200. omit mitochondrial contamination greater than 10%. omit cells with molecules greater than 10,000
 homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
 
 homeo.isl1_sib_10X
 #2979 cells preserved from 17713 in original data
-```
 
-Noticable increase in cells/samples from 2979 to ~16000 using an alternative subsetting parameter:
-```homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10 & nCount_RNA <10000)```
-
-
-```{r, normalize}
+####Normalize####
 #call the plan() function to initiate the multiprocess/parallelization for NormalizeData()
 plan("multiprocess")
 homeo.isl1_sib_10X <- NormalizeData(homeo.isl1_sib_10X, normalization.method = "LogNormalize", scale.factor = 10000, verbose = TRUE)
 #mutliprocess for NormalizationData using 1G is executable, not same case for ScaleData()
-```
 
-```{r, FindVariableFeatures}
+####FindVariableFeatures####
 #Identification of highly variable genes
 homeo.isl1_sib_10X <- FindVariableFeatures(homeo.isl1_sib_10X, selection.method = "vst", nfeatures = 2000)
 
@@ -129,9 +88,7 @@ VariableFeature.labedlplot2.homeo.isl1_sib_10X <- LabelPoints(plot = VariableFea
 
 VariableFeature.labedlplot2.homeo.isl1_sib_10X
 
-```
-
-```{r, scale}
+####Scale####
 all.genes <- rownames(homeo.isl1_sib_10X)
 #25622 genes total
 #another method of accessing unique, nonduplciated gene symbols in counts data.
@@ -143,21 +100,13 @@ plan("sequential")
 #options(future.globals.maxSize = 3500 * 1024^2)
 #plan("multiprocess")
 homeo.isl1_sib_10X <- ScaleData(homeo.isl1_sib_10X, features = all.genes, vars.to.regress = "percent.mt", verbose = TRUE)
-```
 
-Error in getGlobalsAndPackages(expr, envir = envir, globals = globals) : 
-  The total size of the 11 globals that need to be exported for the future expression (‘FUN()’) is 3.18 GiB. This exceeds the maximum allowed size of 0.98 GiB (option 'future.globals.maxSize'). The three largest globals are ‘object’ (3.17 GiB of class ‘numeric’), ‘features’ (1.67 MiB of class ‘character’) and ‘split.cells’ (1.39 MiB of class ‘list’).
-  
-  Formerally using set future.global to 1G, change to 3.5G however activit usage on local mac is using 6G/8G. If R session aborts, will have to resort to "sequential" and fargo parallelization.
-```{r, save}
+####Save Environment####
 #default save RData env
 save.image("../data/workspace_homeo_isl1_sib_10X.RData")
-#3.1G, this seems to be the correct way
-```
+#3.1G
 
-### Perform PCA
-
-```{r, RunPCA}
+####Perform PCA####
 #default pc is set to 100
 homeo.isl1_sib_10X <- RunPCA(homeo.isl1_sib_10X, npcs = 100, verbose = TRUE, features = all.genes)
 
@@ -167,31 +116,23 @@ DimHeatmap(homeo.isl1_sib_10X, dims = 1:15, cells = 500, balanced = TRUE)
 
 DimPlot(homeo.isl1_sib_10X, reduction = "pca")
 
-```
+####Choosing PC####
 
-### Choosing PC
-```{r,scree}
+####Elbow Plot####
 ElbowPlot(homeo.isl1_sib_10X, ndims = 50)
 
 ElbowPlot(homeo.isl1_sib_10X, ndims = 30)
 
 ElbowPlot(homeo.isl1_sib_10X, ndims = 20)
 
-```
-Scree plot shows that variance/eigenvalues in data seem to level off between 15-20 PCs. We'll get the most information within the first ~15 PCs. Use jackstraw to confirm statistical power.
-
-```{r, jackstraw}
+####JackStraw####
 #dims is defaulted to 20
 homeo.isl1_sib_10X <- JackStraw(homeo.isl1_sib_10X, num.replicate = 100)
 homeo.isl1_sib_10X <- ScoreJackStraw(homeo.isl1_sib_10X, dims = 1:20)
 JackStrawPlot.PC20.homeo.isl1_sib_10X<- JackStrawPlot(homeo.isl1_sib_10X, dims = 1:20)
 JackStrawPlot.PC20.homeo.isl1_sib_10X
-```
-Showing less statistical significance past >18 PC. Will set PC to 15
 
-### Clustering/UMAP
-
-```{r, cluster}
+####Clustering/UMAP####
 homeo.isl1_sib_10X <- FindNeighbors(homeo.isl1_sib_10X, dims = 1:15, features = all.genes)
 
 homeo.isl1_sib_10X <- FindClusters(homeo.isl1_sib_10X, resolution = 1.2)
@@ -200,32 +141,18 @@ homeo.isl1_sib_10X <- RunUMAP(homeo.isl1_sib_10X, dims = 1:15, reduction = "pca"
 
 DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE) 
 
+####Annotate Clusters####
 
-```
-
-PC 15 with resolution 1.2, 14 clusters: gave pretty neat cluster, some single cells outside their prespective groupings however no striking outliers
-
-```{r}
-save.image("../data/workspace_homeo_isl1_sib_10X.RData")
-```
-
-### Annotate Clusters
-
-```{r, gene_table}
 #import gene info list pulled from ensembl
 gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
 
-#change header name from 
-```
+####Findallmarkers####
 
-```{r, findallmarkers}
 #mirrored as closely in parameters to Lush, 2019. as possible (see "Quality control, dimensional reduction, and cell classification" under Methods)
 #fold change greater than 0.10, or less than 􏰀0.10
 #only return p-value <.10 (see return.thres())
 all.markers.homeo.isl1_sib_10X <- FindAllMarkers(homeo.isl1_sib_10X, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, return.thresh = 0.01, verbose = TRUE)
 
-```
-```{r}
 #change the column name formerally called "gene" generated from FindAllMarkers() to  "Gene.name.uniq" so we can merge with gene_table
 #must have same column name in order to match genes
 colnames(all.markers.homeo.isl1_sib_10X)[7] <- "Gene.name.uniq"
@@ -243,13 +170,7 @@ all.markers.homeo.isl1_sib_10X <- all.markers.homeo.isl1_sib_10X[order( all.mark
 #dir.create('../data/results_homeo.isl1_sib_10X/')
 write.table(all.markers.homeo.isl1_sib_10X, file = '../data/results_homeo.isl1_sib_10X/findallmarkers.tsv', sep = '\t', row.names = F)
 
-
-```
-
-note: best practice should be to create a directory in bash (instead of in R) to avoid creating multiple dir
-
-
-```{r, findmarker}
+####FindMarkers####
 for (x in levels(Idents(homeo.isl1_sib_10X))) {
   cluster_name <- paste('cluster', x, sep="_")
   print(paste("finding conserved markers and exporting genes from cluster", x, sep=" "))
@@ -259,30 +180,7 @@ for (x in levels(Idents(homeo.isl1_sib_10X))) {
   #write.table(temp_cluster, paste(cluster_name, ".tsv", sep=""), sep="\t", col.names=TRUE)
 }
 
-```
-
-```{r}
-cluster.df.list <- list()
-for (x in 1:2) {
-  cluster_name <- paste0('homeo.isl1.10X.cluster_', x)
-  print(cluster_name)
-  temp_cluster <- assign(paste0("homeo.isl1.10X.cluster_", x),FindMarkers(homeo.isl1_sib_10X, ident.1 = x, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE))
-  cluster.df.list[cluster_name] <- temp_cluster
-  #print(temp_cluster)
-  #temp_cluster$Gene.name.uniq <- rownames(temp_cluster)
-  #print(temp_cluster)
-  #temp_cluster <- merge(temp_cluster, gene_table, by = "Gene.name.uniq")
-  #print(temp_cluster)
-  #write.table(temp_cluster, paste(cluster_name, ".tsv", sep=""), sep="\t", col.names=TRUE)
-}
-
-cluster.df.list$homeo.isl1.10X.cluster_1
-
-homeo.isl1.10X.cluster_1$Gene.name.uniq <- rownames(homeo.isl1.10X.cluster_1)
-homeo.isl1.10X.cluster_1 <- merge(homeo.isl1.10X.cluster_1, gene_table, by = "Gene.name.uniq")
-```
-
-```{r,pdfsave}
+####Save Figures to PDF####
 pdf("./isl1_sib_counts_10X_figures/pct.mito.vln.homeo.isl1.sib.10X.pdf")
 pct.mito.vln.homeo.isl1.sib.10X
 dev.off()
@@ -294,10 +192,6 @@ dev.off()
 pdf("./isl1_sib_counts_10X_figures/nCount.vln.homeo.isl1.sib.10X.pdf")
 nCount.vln.homeo.isl1.sib.10X
 dev.off()
-#pct.mito.vln.homeo.isl1.sib.10X
-
-```
-```{r}
 
 pdf("./isl1_sib_counts_10X_figures/featurescatterQC.pdf", width=10, height=5)
 featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X + featurescatter.nCountXnFeature.homeo.isl1.sib.10X
@@ -322,4 +216,4 @@ dev.off()
 pdf("./isl1_sib_counts_10X_figures/UMAP.homeo.isl1_sib_10X.pdf")
 DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE) 
 dev.off()
-```
+

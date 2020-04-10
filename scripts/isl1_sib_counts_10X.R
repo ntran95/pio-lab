@@ -3,17 +3,29 @@
 ####Set up environment####
 #install.packages("Seurat")
 library(Seurat)
-library(plotly)
+# library(plotly)
 #install.packages("future")
-library(future)
+# library(future)
 library(dplyr)
 library(ggplot2)
 library(cowplot)
-library(gridExtra)
-library(ggrepel)
+# library(gridExtra)
+# library(ggrepel)
 options(future.globals.maxSize = 5000 * 1024^2)
 
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
+
+# Daniel stuff
+if (FALSE) {
+  setwd("/n/projects/ddiaz/Analysis/Scripts/Nicole/pio-lab/scripts")
+
+  script_name <- "isl1_sib_counts_10X"
+
+  figurePath <- function(filename){paste0("/n/projects/ddiaz/Analysis",
+  "/Scripts/Nicole/pio-lab/scripts/", script_name, "_figures/", filename)}
+
+  devtools::load_all("/n/projects/ddiaz/Analysis/Scripts/SeuratExtensions")
+}
 
 ####Read in Data####
 
@@ -22,8 +34,6 @@ setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
 isl1_sib_10X.data <- Read10X(data.dir = "../data/isl1_sib_counts_10X/")
 
 homeo.isl1_sib_10X <- CreateSeuratObject(counts = isl1_sib_10X.data, project = "homeo.isl1.sib.10X", min.cells = 1, min.features = 1)
-
-homeo.isl1_sib_10X
 
 ####Standard pre-processing workflow####
 #calculate mitochondrial contamination
@@ -38,6 +48,8 @@ homeo.isl1_sib_10X[["percent.mt"]] <- PercentageFeatureSet(homeo.isl1_sib_10X, p
 #will not be delimitting threshold for nFeature_RNA, we want all possible genes
 nFeature.vln.homeo.isl1.sib.10X <-VlnPlot(object = homeo.isl1_sib_10X, features = "nFeature_RNA") + geom_hline(yintercept = 3000, color = 'red') + geom_hline(yintercept = 200, color = 'red') +  scale_y_continuous(breaks=c(200, 3000))
 summary(homeo.isl1_sib_10X$nFeature_RNA)
+
+nFeature.vln.homeo.isl1.sib.10X
 
 #nCount_RNA
 nCount.vln.homeo.isl1.sib.10X <- VlnPlot(object = homeo.isl1_sib_10X, features = "nCount_RNA") + ylim(0, 15000) + geom_hline(yintercept = 10000, color = 'red') 
@@ -99,7 +111,7 @@ sum(grepl(pattern = "TRUE", x = test))
 plan("sequential")
 #options(future.globals.maxSize = 3500 * 1024^2)
 #plan("multiprocess")
-homeo.isl1_sib_10X <- ScaleData(homeo.isl1_sib_10X, features = all.genes, vars.to.regress = "percent.mt", verbose = TRUE)
+homeo.isl1_sib_10X <- ScaleData(homeo.isl1_sib_10X, features = NULL, vars.to.regress = NULL, verbose = TRUE)
 
 ####Save Environment####
 #default save RData env
@@ -108,7 +120,7 @@ save.image("../data/workspace_homeo_isl1_sib_10X.RData")
 
 ####Perform PCA####
 #default pc is set to 100
-homeo.isl1_sib_10X <- RunPCA(homeo.isl1_sib_10X, npcs = 100, verbose = TRUE, features = all.genes)
+homeo.isl1_sib_10X <- RunPCA(homeo.isl1_sib_10X, npcs = 100, verbose = TRUE, features = NULL)
 
 VizDimLoadings(homeo.isl1_sib_10X, dims = 1:2, reduction = "pca")
 
@@ -133,13 +145,19 @@ JackStrawPlot.PC20.homeo.isl1_sib_10X<- JackStrawPlot(homeo.isl1_sib_10X, dims =
 JackStrawPlot.PC20.homeo.isl1_sib_10X
 
 ####Clustering/UMAP####
-homeo.isl1_sib_10X <- FindNeighbors(homeo.isl1_sib_10X, dims = 1:15, features = all.genes)
+homeo.isl1_sib_10X <- FindNeighbors(homeo.isl1_sib_10X, dims = 1:15, features = NULL)
 
 homeo.isl1_sib_10X <- FindClusters(homeo.isl1_sib_10X, resolution = 1.2)
 
 homeo.isl1_sib_10X <- RunUMAP(homeo.isl1_sib_10X, dims = 1:15, reduction = "pca")
 
-DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE) 
+
+p1 <- DimPlot(homeo.isl1_sib_10X, reduction = "umap",
+  label = TRUE, pt.size= 0.4)
+png(figurePath("umap_clusters.png"),
+  width = 11, height = 9, units = "in", res = 300)
+  print(cleanUMAP(p1))
+dev.off()
 
 ####Annotate Clusters####
 

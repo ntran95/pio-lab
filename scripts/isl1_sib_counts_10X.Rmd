@@ -76,8 +76,8 @@ summary(homeo.isl1_sib_10X$percent.mt)
 
 #CombinePlots(plots = list(nFeature.vln.homeo.isl1.sib.10X + nCount.vln.homeo.isl1.sib.10X + pct.mito.vln.homeo.isl1.sib.10X), ncol = 3)
 
-nFeature.vln.homeo.isl1.sib.10X + nCount.vln.homeo.isl1.sib.10X + pct.mito.vln.homeo.isl1.sib.10X
 ```
+
 
 
 ```{r}
@@ -279,4 +279,46 @@ cluster.df.list$homeo.isl1.10X.cluster_1
 
 homeo.isl1.10X.cluster_1$Gene.name.uniq <- rownames(homeo.isl1.10X.cluster_1)
 homeo.isl1.10X.cluster_1 <- merge(homeo.isl1.10X.cluster_1, gene_table, by = "Gene.name.uniq")
+```
+
+```{r,pdfsave}
+pdf("./isl1_sib_counts_10X_figures/pct.mito.vln.homeo.isl1.sib.10X.pdf")
+pct.mito.vln.homeo.isl1.sib.10X
+dev.off()
+
+pdf("./isl1_sib_counts_10X_figures/nFeature.vln.homeo.isl1.sib.10X.pdf")
+nFeature.vln.homeo.isl1.sib.10X
+dev.off()
+
+pdf("./isl1_sib_counts_10X_figures/nCount.vln.homeo.isl1.sib.10X.pdf")
+nCount.vln.homeo.isl1.sib.10X
+dev.off()
+#pct.mito.vln.homeo.isl1.sib.10X
+
+```
+```{r}
+
+pdf("./isl1_sib_counts_10X_figures/featurescatterQC.pdf", width=10, height=5)
+featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X + featurescatter.nCountXnFeature.homeo.isl1.sib.10X
+dev.off()
+
+pdf("./isl1_sib_counts_10X_figures/VariableFeature.labedlplot2.homeo.isl1_sib_10X.pdf")
+VariableFeature.labedlplot2.homeo.isl1_sib_10X
+dev.off()
+
+pdf("./isl1_sib_counts_10X_figures/HeatMapPC15.pdf")
+DimHeatmap(homeo.isl1_sib_10X, dims = 1:15, cells = 500, balanced = TRUE)
+dev.off()
+
+pdf("./isl1_sib_counts_10X_figures/ElblowPlot.pdf")
+ElbowPlot(homeo.isl1_sib_10X, ndims = 20)
+dev.off()
+
+#pdf("./isl1_sib_counts_10X_figures/JackStrawPlot.PC20.homeo.isl1_sib_10X.pdf")
+#JackStrawPlot.PC20.homeo.isl1_sib_10X
+#dev.off()
+
+pdf("./isl1_sib_counts_10X_figures/UMAP.homeo.isl1_sib_10X.pdf")
+DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE) 
+dev.off()
 ```

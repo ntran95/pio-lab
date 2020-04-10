@@ -232,15 +232,51 @@ colnames(all.markers.homeo.isl1_sib_10X)[7] <- "Gene.name.uniq"
 #inspect new col name change
 names(all.markers.homeo.isl1_sib_10X)
 
+#merge gene table with all markers generated based on uniq gene symbol
 all.markers.homeo.isl1_sib_10X <- merge(all.markers.homeo.isl1_sib_10X, gene_table, by = "Gene.name.uniq") 
 
-
+#reorder df in ascending order based on cluster (col #7) and then avg_logFC (col#3)
 all.markers.homeo.isl1_sib_10X <- all.markers.homeo.isl1_sib_10X[order( all.markers.homeo.isl1_sib_10X[,7], all.markers.homeo.isl1_sib_10X[,3] ),]
+
+#export in data/ dir
+#dir.create('../data/results_homeo.isl1_sib_10X/')
+write.table(all.markers.homeo.isl1_sib_10X, file = '../data/results_homeo.isl1_sib_10X/findallmarkers.tsv', sep = '\t', row.names = F)
 
 
 ```
 
-```{r, allmarker}
-#export results corresponding to each cluster into respective .tsv files
+note: best practice should be to create a directory in bash (instead of in R) to avoid creating multiple dir
 
+
+```{r, findmarker}
+for (x in levels(Idents(homeo.isl1_sib_10X))) {
+  cluster_name <- paste('cluster', x, sep="_")
+  print(paste("finding conserved markers and exporting genes from cluster", x, sep=" "))
+  temp_cluster <- assign(paste0("cluster", x, sep = "_"),FindMarkers(homeo.isl1_sib_10X, ident.1 = x, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE))
+  #cluster_name$Gene.name.uniq <- rownames(cluster_name)
+  #cluster_name <- merge(cluster_name, gene_table, by = "Gene.name.uniq")
+  #write.table(temp_cluster, paste(cluster_name, ".tsv", sep=""), sep="\t", col.names=TRUE)
+}
+
+```
+
+```{r}
+cluster.df.list <- list()
+for (x in 1:2) {
+  cluster_name <- paste0('homeo.isl1.10X.cluster_', x)
+  print(cluster_name)
+  temp_cluster <- assign(paste0("homeo.isl1.10X.cluster_", x),FindMarkers(homeo.isl1_sib_10X, ident.1 = x, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE))
+  cluster.df.list[cluster_name] <- temp_cluster
+  #print(temp_cluster)
+  #temp_cluster$Gene.name.uniq <- rownames(temp_cluster)
+  #print(temp_cluster)
+  #temp_cluster <- merge(temp_cluster, gene_table, by = "Gene.name.uniq")
+  #print(temp_cluster)
+  #write.table(temp_cluster, paste(cluster_name, ".tsv", sep=""), sep="\t", col.names=TRUE)
+}
+
+cluster.df.list$homeo.isl1.10X.cluster_1
+
+homeo.isl1.10X.cluster_1$Gene.name.uniq <- rownames(homeo.isl1.10X.cluster_1)
+homeo.isl1.10X.cluster_1 <- merge(homeo.isl1.10X.cluster_1, gene_table, by = "Gene.name.uniq")
 ```

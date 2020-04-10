@@ -210,7 +210,37 @@ save.image("../data/workspace_homeo_isl1_sib_10X.RData")
 
 ### Annotate Clusters
 
+```{r, gene_table}
+#import gene info list pulled from ensembl
+gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
+
+#change header name from 
+```
+
+```{r, findallmarkers}
+#mirrored as closely in parameters to Lush, 2019. as possible (see "Quality control, dimensional reduction, and cell classification" under Methods)
+#fold change greater than 0.10, or less than 􏰀0.10
+#only return p-value <.10 (see return.thres())
+all.markers.homeo.isl1_sib_10X <- FindAllMarkers(homeo.isl1_sib_10X, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, return.thresh = 0.01, verbose = TRUE)
+
+```
 ```{r}
+#change the column name formerally called "gene" generated from FindAllMarkers() to  "Gene.name.uniq" so we can merge with gene_table
+#must have same column name in order to match genes
+colnames(all.markers.homeo.isl1_sib_10X)[7] <- "Gene.name.uniq"
+
+#inspect new col name change
+names(all.markers.homeo.isl1_sib_10X)
+
+all.markers.homeo.isl1_sib_10X <- merge(all.markers.homeo.isl1_sib_10X, gene_table, by = "Gene.name.uniq") 
+
+
+all.markers.homeo.isl1_sib_10X <- all.markers.homeo.isl1_sib_10X[order( all.markers.homeo.isl1_sib_10X[,7], all.markers.homeo.isl1_sib_10X[,3] ),]
+
 
 ```
 
+```{r, allmarker}
+#export results corresponding to each cluster into respective .tsv files
+
+```

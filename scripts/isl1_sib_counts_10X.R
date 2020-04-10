@@ -166,6 +166,12 @@ all.markers.homeo.isl1_sib_10X <- merge(all.markers.homeo.isl1_sib_10X, gene_tab
 #reorder df in ascending order based on cluster (col #7) and then avg_logFC (col#3)
 all.markers.homeo.isl1_sib_10X <- all.markers.homeo.isl1_sib_10X[order( all.markers.homeo.isl1_sib_10X[,7], all.markers.homeo.isl1_sib_10X[,3] ),]
 
+#top 20
+top_50.all.marker.homeo.isl1 <- all.markers.homeo.isl1_sib_10X %>% group_by(cluster) %>% top_n(n = 50, wt = (avg_logFC))
+
+#top 50 Heat Map
+HeatMap.Top50Markers.Homeo.isl1<- DoHeatmap(homeo.isl1_sib_10X, features = top_50.all.marker.homeo.isl1$Gene.name.uniq)
+
 #export in data/ dir
 #dir.create('../data/results_homeo.isl1_sib_10X/')
 write.table(all.markers.homeo.isl1_sib_10X, file = '../data/results_homeo.isl1_sib_10X/findallmarkers.tsv', sep = '\t', row.names = F)
@@ -179,6 +185,23 @@ for (x in levels(Idents(homeo.isl1_sib_10X))) {
   #cluster_name <- merge(cluster_name, gene_table, by = "Gene.name.uniq")
   #write.table(temp_cluster, paste(cluster_name, ".tsv", sep=""), sep="\t", col.names=TRUE)
 }
+
+####Identify Cluster Identity####
+
+####Cluster 0####
+#find top 20 avg_logFC for cluster 0, top avg_logFC arranged as 1st row
+filter(all.markers.homeo.isl1_sib_10X, cluster == "0") %>% top_n(n = 20, wt = (avg_logFC)) %>% arrange(cluster, desc(avg_logFC))
+
+
+####Polar Cells####
+FeaturePlot(homeo.isl1_sib_10X, features = c("sost", "adcyap1b", "six2b", "fsta", "wnt2"), label = TRUE)
+#srrt/ars2 does not show up in all.marker.homeo, perhaps signal is too low?
+#0,8,11,6?
+
+####Hair Cell Lineage####
+FeaturePlot(homeo.isl1_sib_10X, features = c("atoh1a", "dld", "her4.1", "tekt3"), label = TRUE)
+VlnPlot(homeo.isl1_sib_10X, features = c("atoh1a", "dld", "her4.1", "tekt3"), lo)
+
 
 ####Save Figures to PDF####
 pdf("./isl1_sib_counts_10X_figures/pct.mito.vln.homeo.isl1.sib.10X.pdf")
@@ -213,7 +236,10 @@ pdf("./isl1_sib_counts_10X_figures/JackStrawPlot.PC20.homeo.isl1_sib_10X.pdf")
 JackStrawPlot.PC20.homeo.isl1_sib_10X
 dev.off()
 
-pdf("./isl1_sib_counts_10X_figures/UMAP.homeo.isl1_sib_10X.pdf")
+pdf("./isl1_sib_counts_10X_figures/UMAP.homeo.isl1_sib_10X.pdf", width=10, height=5)
 DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE) 
 dev.off()
 
+pdf("./isl1_sib_counts_10X_figures/HeatMap.Top50Markers.Homeo.isl1.pdf")
+HeatMap.Top50Markers.Homeo.isl1
+dev.off()

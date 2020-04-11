@@ -207,6 +207,24 @@ for (x in levels(Idents(homeo.isl1_sib_10X))) {
 }
 
 ####Identify Cluster Identity####
+#canonical marker lists
+polar.cells.markers <- c("sost", "adcyap1b", "six2b", "fsta", "wnt2", "srrt")
+hair.cells.markers <- c("atoh1a", "dld", "her4.1", "tekt3")
+ap.cells.markers <- c("cx44.2", "fap", "fgf10a", "hmx2", "hmx3a", "mcf2lb", "nfasca", "pdgfaa", "prom1b", "ompb", "pip5k1bb", "si:ch73-261i21.5", "tnfsf10l3", "wdpcp", "wnt11r", "znf185")
+mantle.cells.markers <- c("cldne", "crb3b", "crip1", "cts12", "fat1b", "fgfr2", "map7d3", "mcama", "ovgp1", "pkhd1l1", "pknox2", "ponzr6", "rgs4", "sfrp1a", "stat3",
+                          "sulf1",
+                          "tmem119b",
+                          "tnfb",
+                          "tnfsf10",
+                          "tspan1")
+ring.cell.markers <- c("alpl", "ckma",  "cmah" , "fndc7rs4","hopx", "nr4a3", "tcf7l2", "tfap2a")
+central.cell.markers <- c("ccl20a.3","crabp2a","cxcl20", "dhrs3a", "dkk2", "fabp11a", "fabp7a",
+"fgf3", "fhdc2", "gata2a", "hbgefb", "hey2", "igfbp5a"  ,"isl1", "itgb4", "kitlga", "krt92", "lima1a", "mb", "mhc1lda", "ptprz1a", "rdh10a", "si:ch73-380n15.2", "sox21b","sult3st2",  "sult3st3", "abcg4b", "AL954146.1",
+"abcg4b","bmp4", "CABZ01067232.1l", "ebf3a", "si:dkey-4p15.5 fgf22", "gata2b", "glula", "her15.1", "her6",
+"hey2", "HSPA8", "krt18", "lfng", "mb", "mfng", "palm1a", "proca1","prox1a", "slc1a3a/glasta", "soul5", "tppp3", "vegfab", "zgc:165423")
+
+
+#si:dkey-4p15.5 = ENSDARG00000086272
 
 ####Cluster 0####
 #find top 20 avg_logFC for cluster 0, top avg_logFC arranged as 1st row
@@ -214,13 +232,35 @@ filter(all.markers.homeo.isl1_sib_10X, cluster == "0") %>% top_n(n = 20, wt = (a
 
 
 ####Polar Cells####
-FeaturePlot(homeo.isl1_sib_10X, features = c("sost", "adcyap1b", "six2b", "fsta", "wnt2"), label = TRUE)
-#srrt/ars2 does not show up in all.marker.homeo, perhaps signal is too low?
+polar.cell.featureplot <-FeaturePlot(homeo.isl1_sib_10X, features = polar.cells.markers, label = TRUE) + ggtitle("Expression Levels of Polar Cell Markers")
+polar.cell.vlnplot <- VlnPlot(homeo.isl1_sib_10X, features = polar.cells.markers, pt.size  = 0)+ ggtitle("Expression Levels of Polar Cell Markers")
+#ars2 does not show up in all.marker.homeo, perhaps signal is too low?
 #0,8,11,6?
 
 ####Hair Cell Lineage####
-FeaturePlot(homeo.isl1_sib_10X, features = c("atoh1a", "dld", "her4.1", "tekt3"), label = TRUE)
-VlnPlot(homeo.isl1_sib_10X, features = c("atoh1a", "dld", "her4.1", "tekt3"), lo)
+hair.cell.featureplot <- FeaturePlot(homeo.isl1_sib_10X, features = hair.cells.markers, label = TRUE) + ggtitle("Expression Levels of Hair Cell Markers")
+hair.cell.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = hair.cells.markers, pt.size  = 0)+ ggtitle("Expression Levels of Hair Cell Markers")
+
+####A-P Cells####
+ap.cells.featureplt <- FeaturePlot(homeo.isl1_sib_10X, features = ap.cells.markers, label = TRUE) + ggtitle("Expression Levels of A-P Cell Markers")
+ap.cells.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = ap.cells.markers, pt.size = 0) + ggtitle("Expression Levels of A-P Cell Markers")
+
+####Mantle Cells####
+mantle.cells.featureplt <- FeaturePlot(homeo.isl1_sib_10X, features = mantle.cells.markers, label = TRUE)+ ggtitle("Expression Levels of Mantle Cell Markers")
+mantle.cells.vlnplt <-  VlnPlot(homeo.isl1_sib_10X, features = mantle.cells.markers, pt.size = 0) + ggtitle("Expression Levels of Mantle Cell Markers")
+#ERROR: The following requested variables were not found: lye, si:dkey−103g5.3
+
+
+####Ring#### 
+ring.cell.featureplt <- FeaturePlot(homeo.isl1_sib_10X, features = ring.cell.markers, label = TRUE)+ ggtitle("Expression Levels of Ring Cell Markers")
+ring.cell.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = ring.cell.markers, pt.size = 0)
+
+####Central Cells####
+#Part 1
+central.cells.featureplt <- FeaturePlot(homeo.isl1_sib_10X, features = central.cell.markers, label = TRUE)+ ggtitle("Expression Levels of Central Cell Markers")
+central.cells.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = central.cell.markers, pt.size = 0)+ ggtitle("Expression Levels of Central Cell Markers")
+#Error:The following requested variables were not found: hbgefb
+
 
 
 ####Save Figures to PDF####

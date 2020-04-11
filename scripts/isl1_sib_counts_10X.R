@@ -17,14 +17,14 @@ setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
 
 # Daniel stuff
 if (FALSE) {
-  setwd("/n/projects/ddiaz/Analysis/Scripts/Nicole/pio-lab/scripts")
+  setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
 
   script_name <- "isl1_sib_counts_10X"
 
   figurePath <- function(filename){paste0("/n/projects/ddiaz/Analysis",
   "/Scripts/Nicole/pio-lab/scripts/", script_name, "_figures/", filename)}
 
-  devtools::load_all("/n/projects/ddiaz/Analysis/Scripts/SeuratExtensions")
+  #devtools::load_all("/n/projects/ddiaz/Analysis/Scripts/SeuratExtensions")
 }
 
 ####Read in Data####
@@ -76,10 +76,10 @@ featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X + featurescatter.nCountXnFea
 
 ####Subsetting####
 #subsetting parameters: omit cells with genes less than 3000 and greater than 200. omit mitochondrial contamination greater than 10%. omit cells with molecules greater than 10,000
-homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)
+homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10 & nCount_RNA <10000) 
 
 homeo.isl1_sib_10X
-#2979 cells preserved from 17713 in original data
+#16607 cells preserved from 17713 in original data
 
 ####Normalize####
 #call the plan() function to initiate the multiprocess/parallelization for NormalizeData()
@@ -133,15 +133,15 @@ DimPlot(homeo.isl1_sib_10X, reduction = "pca")
 ####Elbow Plot####
 ElbowPlot(homeo.isl1_sib_10X, ndims = 50)
 
-ElbowPlot(homeo.isl1_sib_10X, ndims = 30)
+ElbowPlot(homeo.isl1_sib_10X, ndims = 35)
 
 ElbowPlot(homeo.isl1_sib_10X, ndims = 20)
 
 ####JackStraw####
 #dims is defaulted to 20
-homeo.isl1_sib_10X <- JackStraw(homeo.isl1_sib_10X, num.replicate = 100)
-homeo.isl1_sib_10X <- ScoreJackStraw(homeo.isl1_sib_10X, dims = 1:20)
-JackStrawPlot.PC20.homeo.isl1_sib_10X<- JackStrawPlot(homeo.isl1_sib_10X, dims = 1:20)
+homeo.isl1_sib_10X <- JackStraw(homeo.isl1_sib_10X, num.replicate = 100, dims = 35)
+homeo.isl1_sib_10X <- ScoreJackStraw(homeo.isl1_sib_10X, dims = 1:35)
+JackStrawPlot.PC20.homeo.isl1_sib_10X<- JackStrawPlot(homeo.isl1_sib_10X, dims = 1:35)
 JackStrawPlot.PC20.homeo.isl1_sib_10X
 
 ####Clustering/UMAP####
@@ -152,11 +152,13 @@ homeo.isl1_sib_10X <- FindClusters(homeo.isl1_sib_10X, resolution = 1.2)
 homeo.isl1_sib_10X <- RunUMAP(homeo.isl1_sib_10X, dims = 1:15, reduction = "pca")
 
 
-p1 <- DimPlot(homeo.isl1_sib_10X, reduction = "umap",
+umap.homeo.isl1.sib.10X <- DimPlot(homeo.isl1_sib_10X, reduction = "umap",
   label = TRUE, pt.size= 0.4)
+
+umap.homeo.isl1.sib.10X
 png(figurePath("umap_clusters.png"),
   width = 11, height = 9, units = "in", res = 300)
-  print(cleanUMAP(p1))
+  print(umap.homeo.isl1.sib.10X)
 dev.off()
 
 ####Annotate Clusters####

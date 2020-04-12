@@ -21,8 +21,8 @@ if (FALSE) {
 
   script_name <- "isl1_sib_counts_10X"
 
-  figurePath <- function(filename){paste0("/n/projects/ddiaz/Analysis",
-  "/Scripts/Nicole/pio-lab/scripts/", script_name, "_figures/", filename)}
+  figurePath <- function(filename){paste0("/Volumes/easystore/SIMR_2019",
+  "/pio-lab/scripts/", script_name, "_figures/", filename)}
 
   #devtools::load_all("/n/projects/ddiaz/Analysis/Scripts/SeuratExtensions")
 }
@@ -275,14 +275,14 @@ Top10GeneCellIdentity <- function(marker.list, df){
   }
 Top10GeneCellIdentity(marker.list = ap.cells.markers, df = all.markers.homeo.isl1_sib_10X)
 
-FeaturePlotToPdf <- function(marker.list) {
+####FeaturePlotToPdf####
+FeaturePlotToPng <- function(marker.list) {
   for (x in marker.list){
-    to.pdf <- FeaturePlot(homeo.isl1_sib_10X, features = x, label = TRUE)
-    #png(figurePath("umap_clusters.png"),
-    #width = 11, height = 9, units = "in", res = 300)
-    #print(t)
+    to.png <- FeaturePlot(homeo.isl1_sib_10X, features = x, label = TRUE) 
+    #png(figurePath(marker.list[x], '.png'),width = 11, height = 9, units = 'in', res = 300)
+    print(to.png)
     #dev.off()
-    print(to.pdf)
+    #print(to.png)
   }
 }
 FeaturePlotToPdf(ap.cells.markers)

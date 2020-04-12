@@ -262,15 +262,30 @@ central.cells.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = central.cell.mark
 
 
 #####Top10GeneCellIdentityFunction#####
-#This
 Top10GeneCellIdentity <- function(marker.list, df){
+  #This function will return a adjusted dataframe for the genes with the 10 (or less) highest avg_logFC
+  #and its corresponding cluster
+  #it will also generate a FeaturePlot and Violin Plot corresponding
+  #this function may be helpful as most canonical markers have low signal, this will discern what signal is highest to help identify clusters
   top10.df <-filter(df, Gene.name.uniq == marker.list) %>% top_n(n = 10, wt = (avg_logFC)) %>% arrange(desc(avg_logFC))
   gene.list <- unique(top10.df$Gene.name.uniq)
   feature.plot <- FeaturePlot(homeo.isl1_sib_10X, features = gene.list, label = TRUE)
-  return(list(top10.df, feature.plot))
+  vln.plt <- VlnPlot(homeo.isl1_sib_10X, features = gene.list, pt.size = 0)
+  return(list(top10.df, feature.plot, vln.plt))
   }
 Top10GeneCellIdentity(marker.list = ap.cells.markers, df = all.markers.homeo.isl1_sib_10X)
 
+FeaturePlotToPdf <- function(marker.list) {
+  for (x in marker.list){
+    to.pdf <- FeaturePlot(homeo.isl1_sib_10X, features = x, label = TRUE)
+    #png(figurePath("umap_clusters.png"),
+    #width = 11, height = 9, units = "in", res = 300)
+    #print(t)
+    #dev.off()
+    print(to.pdf)
+  }
+}
+FeaturePlotToPdf(ap.cells.markers)
 
 
 ####Save Figures to PDF####

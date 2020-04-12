@@ -226,9 +226,8 @@ central.cell.markers <- c("ccl20a.3","crabp2a","cxcl20", "dhrs3a", "dkk2", "fabp
 
 #si:dkey-4p15.5 = ENSDARG00000086272
 
-####Cluster 0####
-#find top 20 avg_logFC for cluster 0, top avg_logFC arranged as 1st row
-filter(all.markers.homeo.isl1_sib_10X, cluster == "0") %>% top_n(n = 20, wt = (avg_logFC)) %>% arrange(cluster, desc(avg_logFC))
+#find top 5 avg_logFC for ap cell markers, top avg_logFC arranged as 1st row
+filter(all.markers.homeo.isl1_sib_10X, Gene.name.uniq == ap.cells.markers) %>% top_n(n = 5, wt = (avg_logFC)) %>% arrange(desc(avg_logFC))
 
 
 ####Polar Cells####
@@ -260,6 +259,17 @@ ring.cell.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = ring.cell.markers, pt
 central.cells.featureplt <- FeaturePlot(homeo.isl1_sib_10X, features = central.cell.markers, label = TRUE)+ ggtitle("Expression Levels of Central Cell Markers")
 central.cells.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = central.cell.markers, pt.size = 0)+ ggtitle("Expression Levels of Central Cell Markers")
 #Error:The following requested variables were not found: hbgefb
+
+
+#####Top10GeneCellIdentityFunction#####
+#This
+Top10GeneCellIdentity <- function(marker.list, df){
+  top10.df <-filter(df, Gene.name.uniq == marker.list) %>% top_n(n = 10, wt = (avg_logFC)) %>% arrange(desc(avg_logFC))
+  gene.list <- unique(top10.df$Gene.name.uniq)
+  feature.plot <- FeaturePlot(homeo.isl1_sib_10X, features = gene.list, label = TRUE)
+  return(list(top10.df, feature.plot))
+  }
+Top10GeneCellIdentity(marker.list = ap.cells.markers, df = all.markers.homeo.isl1_sib_10X)
 
 
 

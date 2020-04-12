@@ -21,7 +21,7 @@ if (FALSE) {
 
   script_name <- "isl1_sib_counts_10X"
 
-  figurePath <- function(filename){paste0("/Volumes/easystore/SIMR_2019",
+  figurePath <- function(filename, format){paste0("/Volumes/easystore/SIMR_2019",
   "/pio-lab/scripts/", script_name, "_figures/", filename)}
 
   #devtools::load_all("/n/projects/ddiaz/Analysis/Scripts/SeuratExtensions")
@@ -217,11 +217,17 @@ mantle.cells.markers <- c("cldne", "crb3b", "crip1", "cts12", "fat1b", "fgfr2", 
                           "tnfb",
                           "tnfsf10",
                           "tspan1")
+#ERROR: The following requested variables were not found: lye, si:dkey−103g5.3
 ring.cell.markers <- c("alpl", "ckma",  "cmah" , "fndc7rs4","hopx", "nr4a3", "tcf7l2", "tfap2a")
 central.cell.markers <- c("ccl20a.3","crabp2a","cxcl20", "dhrs3a", "dkk2", "fabp11a", "fabp7a",
-"fgf3", "fhdc2", "gata2a", "hbgefb", "hey2", "igfbp5a"  ,"isl1", "itgb4", "kitlga", "krt92", "lima1a", "mb", "mhc1lda", "ptprz1a", "rdh10a", "si:ch73-380n15.2", "sox21b","sult3st2",  "sult3st3", "abcg4b", "AL954146.1",
-"abcg4b","bmp4", "CABZ01067232.1l", "ebf3a", "si:dkey-4p15.5 fgf22", "gata2b", "glula", "her15.1", "her6",
-"hey2", "HSPA8", "krt18", "lfng", "mb", "mfng", "palm1a", "proca1","prox1a", "slc1a3a/glasta", "soul5", "tppp3", "vegfab", "zgc:165423")
+"fgf3", "fhdc2", "gata2a", "hey2", "igfbp5a"  ,"isl1", "itgb4", "kitlga", "krt92", "lima1a", "mb", "mhc1lda", "ptprz1a", "rdh10a", "si:ch73-380n15.2", "sox21b","sult3st2",  "sult3st3", "abcg4b", "AL954146.1",
+"abcg4b","bmp4", "ebf3a", "si:dkey-4p15.5", "fgf22", "gata2b", "glula", "her15.1", "her6",
+"hey2", "lfng", "mb", "mfng", "palm1a", "proca1","prox1a", "slc1a3a", "soul5", "tppp3", "vegfab", "zgc:165423")
+#Error: None of the requested features were found: hbgefb in slot data
+#Error: None of the requested features were found: CABZ01067232.1l in slot data
+#Error: None of the requested features were found: HSPA8 in slot data
+#Error: None of the requested features were found: krt18 in slot data
+
 
 
 #si:dkey-4p15.5 = ENSDARG00000086272
@@ -275,17 +281,29 @@ Top10GeneCellIdentity <- function(marker.list, df){
   }
 Top10GeneCellIdentity(marker.list = ap.cells.markers, df = all.markers.homeo.isl1_sib_10X)
 
-####FeaturePlotToPdf####
-FeaturePlotToPng <- function(marker.list) {
+####FeaturePlotToPNG####
+figure_dir <- "isl1_sib_counts_10X_figures"
+FeaturePlotToPng <- function(marker.list, dir_name) {
   for (x in marker.list){
-    to.png <- FeaturePlot(homeo.isl1_sib_10X, features = x, label = TRUE) 
-    #png(figurePath(marker.list[x], '.png'),width = 11, height = 9, units = 'in', res = 300)
-    print(to.png)
-    #dev.off()
-    #print(to.png)
+    #to.png <- FeaturePlot(homeo.isl1_sib_10X, features = x, label = TRUE) 
+    print(x)
+    mypath <- file.path("./", figure_dir, paste(x, ".png", sep = ""))
+    #print(Filing )
+    print(mypath)
+    
+    png(file=mypath,width = 11, height = 9, units = 'in', res = 300)
+    print(FeaturePlot(homeo.isl1_sib_10X, features = x, label = TRUE) )
+    dev.off()
   }
 }
-FeaturePlotToPdf(ap.cells.markers)
+
+FeaturePlotToPng(ap.cells.markers, dir_name = figure_dir)
+FeaturePlotToPng(polar.cells.markers, dir_name = figure_dir)
+FeaturePlotToPng(hair.cells.markers, dir_name = figure_dir)
+FeaturePlotToPng(mantle.cells.markers, dir_name = figure_dir)
+FeaturePlotToPng(ring.cell.markers, dir_name = figure_dir)
+FeaturePlotToPng(central.cell.markers, dir_name = figure_dir)
+
 
 
 ####Save Figures to PDF####

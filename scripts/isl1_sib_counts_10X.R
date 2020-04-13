@@ -348,9 +348,9 @@ dev.off()
 meta <- homeo.isl1_sib_10X@meta.data
 colnames(meta)
 cells <- list("mature-HCs" = c(8,13,18), "early-HCs" = c(10,17),  "HC-prog" = 16,
-              "central-cells" = c(1, 11,4,6, 23), "DV/AP-cells" = c(7,9),
+              "central-cells" = c(1, 11,4,6), "DV/AP-cells" = c(7,9),
               "amplfying support" = 14, "mantle-cells" = c(0,3), "col1a1b-pos" = c(12),
-              "c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(15,22,5,2,21))
+              "c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(15,22,5,2), "apoa1b-pos" = 23, "mfap4-pos" = 21, "krt91-pos" = 24)
 meta$cell.type.ident <- factor(rep("", nrow(meta)),
                                levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {

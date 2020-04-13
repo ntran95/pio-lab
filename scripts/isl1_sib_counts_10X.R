@@ -11,6 +11,7 @@ library(ggplot2)
 library(cowplot)
 # library(gridExtra)
 # library(ggrepel)
+library(ggrepel)
 options(future.globals.maxSize = 5000 * 1024^2)
 
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
@@ -267,41 +268,6 @@ central.cells.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = central.cell.mark
 #Error:The following requested variables were not found: hbgefb
 
 
-#####Top10GeneCellIdentityFunction#####
-Top10GeneCellIdentity <- function(marker.list, df){
-  #This function will return a adjusted dataframe for the genes with the 10 (or less) highest avg_logFC
-  #and its corresponding cluster
-  #it will also generate a FeaturePlot and Violin Plot corresponding
-  #this function may be helpful as most canonical markers have low signal, this will discern what signal is highest to help identify clusters
-  top10.df <-filter(df, Gene.name.uniq == marker.list) %>% top_n(n = 10, wt = (avg_logFC)) %>% arrange(desc(avg_logFC))
-  gene.list <- unique(top10.df$Gene.name.uniq)
-  feature.plot <- FeaturePlot(homeo.isl1_sib_10X, features = gene.list, label = TRUE)
-  vln.plt <- VlnPlot(homeo.isl1_sib_10X, features = gene.list, pt.size = 0)
-  return(list(top10.df, feature.plot, vln.plt))
-  dev.off()
-  }
-Top10GeneCellIdentity(marker.list = ap.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.ap.cell.clusters <- c("7", "15", "5")
-Top10GeneCellIdentity(marker.list = polar.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.polar.cell.cluster <- c("14", "6", "9", "3")
-Top10GeneCellIdentity(marker.list = hair.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.hair.cell.cluster <- c("8", "10", "13", "16", "17", "18")
-Top10GeneCellIdentity(marker.list = mantle.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.mantle.cell.cluster <- c("5", "2", "19","21", "22","24","0","3")
-Top10GeneCellIdentity(marker.list = ring.cell.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.ring.cell.cluster <- c("20","7","24")
-Top10GeneCellIdentity(marker.list = central.cell.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.central.cell.cluster <- c("1","11","4","19","12")
-
-####Rename Clusters####
-for (x in rename.ap.cell.clusters){
-  
-  homeo.isl1_sib_10X <- RenameIdents(homeo.isl1_sib_10X, x = "A-P Cells")
-  print(x)
-}
-homeo.isl1_sib_10X <- RenameIdents(homeo.isl1_sib_10X, "5" = "A-P Cells")
-DimPlot(homeo.isl1_sib_10X,reduction = "umap",
-        label = TRUE, pt.size= 0.4, repel = TRUE)
 
 ####FeaturePlotToPNG####
 figure_dir <- "isl1_sib_counts_10X_figures"
@@ -347,7 +313,44 @@ VlnPlotToPng(mantle.cells.markers,dir_name = figure_dir)
 VlnPlotToPng(ring.cell.markers, dir_name = figure_dir)
 VlnPlotToPng(central.cell.markers, dir_name = figure_dir)
 
+#####Top10GeneCellIdentityFunction#####
+Top10GeneCellIdentity <- function(marker.list, df){
+  #This function will return a adjusted dataframe for the genes with the 10 (or less) highest avg_logFC
+  #and its corresponding cluster
+  #it will also generate a FeaturePlot and Violin Plot corresponding
+  #this function may be helpful as most canonical markers have low signal, this will discern what signal is highest to help identify clusters
+  top10.df <-filter(df, Gene.name.uniq == marker.list) %>% top_n(n = 10, wt = (avg_logFC)) %>% arrange(desc(avg_logFC))
+  gene.list <- unique(top10.df$Gene.name.uniq)
+  feature.plot <- FeaturePlot(homeo.isl1_sib_10X, features = gene.list, label = TRUE)
+  vln.plt <- VlnPlot(homeo.isl1_sib_10X, features = gene.list, pt.size = 0)
+  return(list(top10.df, feature.plot, vln.plt))
+  dev.off()
+}
+Top10GeneCellIdentity(marker.list = ap.cells.markers, df = all.markers.homeo.isl1_sib_10X)
+rename.ap.cell.clusters <- c("7", "15")
+Top10GeneCellIdentity(marker.list = polar.cells.markers, df = all.markers.homeo.isl1_sib_10X)
+rename.polar.cell.cluster <- c("14", "6", "9")
+Top10GeneCellIdentity(marker.list = hair.cells.markers, df = all.markers.homeo.isl1_sib_10X)
+rename.hair.cell.cluster <- c("8", "10", "13", "16", "17", "18")
+Top10GeneCellIdentity(marker.list = mantle.cells.markers, df = all.markers.homeo.isl1_sib_10X)
+rename.mantle.cell.cluster <- c("2", "19","21", "22","0","3", "5")
+Top10GeneCellIdentity(marker.list = ring.cell.markers, df = all.markers.homeo.isl1_sib_10X)
+rename.ring.cell.cluster <- c("20","24")
+Top10GeneCellIdentity(marker.list = central.cell.markers, df = all.markers.homeo.isl1_sib_10X)
+rename.central.cell.cluster <- c("1","11","4","19","12")
 
+####Rename Clusters####
+for (x in rename.polar.cell.cluster){
+  
+  rename.umap <- RenameIdents(homeo.isl1_sib_10X, x = "Polar Cells")
+  print(x)
+}
+annotated.umap <- RenameIdents(homeo.isl1_sib_10X, c("14", "6", "9") = "Polar")
+umap <- DimPlot(homeo.isl1_sib_10X,reduction = "umap",
+        label = TRUE, pt.size= 0.4, repel = TRUE)
+#LabelClusters(umap, id = "ident", clusters = rename.polar.cell.cluster, labels = replicate(4, "Polar Cells"), repel = TRUE) 
+
+levels(homeo.isl1_sib_10X)
 ####Save Figures to PDF####
 pdf("./isl1_sib_counts_10X_figures/pct.mito.vln.homeo.isl1.sib.10X.pdf")
 pct.mito.vln.homeo.isl1.sib.10X

@@ -230,6 +230,19 @@ central.cell.markers <- c("ccl20a.3","crabp2a","cxcl20", "dhrs3a", "dkk2", "fabp
 #Error: None of the requested features were found: HSPA8 in slot data
 #Error: None of the requested features were found: krt18 in slot data
 
+all.canonical <- c("sost", "adcyap1b", "six2b", "fsta", "wnt2", "srrt","atoh1a", "dld", "her4.1", "tekt3", "otofb", "atp1b2b", "atoh1b", "sox4a*1", "hes2.2",
+                   "cx44.2", "fap", "fgf10a", "hmx2", "hmx3a", "mcf2lb", "nfasca", "pdgfaa", "prom1b", "ompb", "pip5k1bb", "si:ch73-261i21.5", "tnfsf10l3", "wdpcp", "wnt11r", "znf185",
+                   "cldne", "crb3b", "crip1", "cts12", "fat1b", "fgfr2", "map7d3", "mcama", "ovgp1", "pkhd1l1", "pknox2", "ponzr6", "rgs4", "sfrp1a", "stat3",
+                   "sulf1",
+                   "tmem119b",
+                   "tnfb",
+                   "tnfsf10",
+                   "tspan1",
+                   "alpl", "ckma",  "cmah" , "fndc7rs4","hopx", "nr4a3", "tcf7l2", "tfap2a",
+                   "ccl20a.3","crabp2a","cxcl20", "dhrs3a", "dkk2", "fabp11a", "fabp7a",
+                   "fgf3", "fhdc2", "gata2a", "hey2", "igfbp5a"  ,"isl1", "itgb4", "kitlga", "krt92", "lima1a", "mb", "mhc1lda", "ptprz1a", "rdh10a", "si:ch73-380n15.2", "sox21b","sult3st2",  "sult3st3", "abcg4b", "AL954146.1",
+                   "abcg4b","bmp4", "ebf3a", "si:dkey-4p15.5", "fgf22", "gata2b", "glula", "her15.1", "her6",
+                   "hey2", "lfng", "mb", "mfng", "palm1a", "proca1","prox1a", "slc1a3a", "soul5", "tppp3", "vegfab", "zgc:165423")
 
 
 #si:dkey-4p15.5 = ENSDARG00000086272
@@ -238,7 +251,7 @@ central.cell.markers <- c("ccl20a.3","crabp2a","cxcl20", "dhrs3a", "dkk2", "fabp
 filter(all.markers.homeo.isl1_sib_10X, Gene.name.uniq == ap.cells.markers) %>% top_n(n = 5, wt = (avg_logFC)) %>% arrange(desc(avg_logFC))
 
 
-####PeaturePlotToPNG####
+####FeaturePlotToPNG####
 figure_dir <- "isl1_sib_counts_10X_figures"
 FeaturePlotToPng <- function(marker.list, dir_name) {
   for (x in marker.list){
@@ -296,17 +309,17 @@ Top10GeneCellIdentity <- function(marker.list, df){
   dev.off()
 }
 Top10GeneCellIdentity(marker.list = ap.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-r#ename.ap.cell.clusters <- c("7", "15")
+#rename.ap.cell.clusters <- c("7", "15")
 Top10GeneCellIdentity(marker.list = polar.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-r#ename.polar.cell.cluster <- c("14", "6", "9")
+#rename.polar.cell.cluster <- c("14", "6", "9")
 Top10GeneCellIdentity(marker.list = hair.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-r#ename.hair.cell.cluster <- c("8", "10", "13", "16", "17", "18")
+#rename.hair.cell.cluster <- c("8", "10", "13", "16", "17", "18")
 Top10GeneCellIdentity(marker.list = mantle.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-r#ename.mantle.cell.cluster <- c("2", "19","21", "22","0","3", "5")
+#rename.mantle.cell.cluster <- c("2", "19","21", "22","0","3", "5")
 Top10GeneCellIdentity(marker.list = ring.cell.markers, df = all.markers.homeo.isl1_sib_10X)
-r#ename.ring.cell.cluster <- c("20","24")
+#rename.ring.cell.cluster <- c("20","24")
 Top10GeneCellIdentity(marker.list = central.cell.markers, df = all.markers.homeo.isl1_sib_10X)
-r#ename.central.cell.cluster <- c("1","11","4","19","12")
+#rename.central.cell.cluster <- c("1","11","4","19","12")
 
 ####Common Features- FeaturePlot####
 common_features <- scan(paste0("/Volumes/easystore/SIMR_2019/pio-lab/data/gene-lists/common_neuromast_features.txt"), what = "character")
@@ -331,14 +344,13 @@ png(figurePath("vlnplot_common_feature.png"), width = 40,
 print(cowplot::plot_grid(plotlist = e_vln, ncol = 4))
 dev.off()
 
-
 ####Rename Clusters####
 meta <- homeo.isl1_sib_10X@meta.data
 colnames(meta)
 cells <- list("mature-HCs" = c(8,13,18), "early-HCs" = c(10,17),  "HC-prog" = 16,
-              "central-cells" = c(1, 11,4,6), "DV/AP-cells" = c(7,9),
+              "central-cells" = c(1, 11,4,6, 23), "DV/AP-cells" = c(7,9),
               "amplfying support" = 14, "mantle-cells" = c(0,3), "col1a1b-pos" = c(12),
-              "c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(15,22,5,2))
+              "c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(15,22,5,2,21))
 meta$cell.type.ident <- factor(rep("", nrow(meta)),
                                levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {
@@ -347,13 +359,16 @@ for (i in 1:length(cells)) {
 homeo.isl1_sib_10X@meta.data <- meta
 Idents(homeo.isl1_sib_10X) <- homeo.isl1_sib_10X@meta.data$cell.type.ident
 
-umap.labeled <- DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE, pt.size= 0.4)
+umap.labeled <- DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE, pt.size= 0.4) + NoLegend()
 
 ####print labeled plot####
 png(figurePath("annotated_umap_clusters.png"),
     width = 11, height = 9, units = "in", res = 300)
 print(umap.labeled)
 dev.off()
+
+
+
 ####Save Figures to PDF####
 pdf("./isl1_sib_counts_10X_figures/pct.mito.vln.homeo.isl1.sib.10X.pdf")
 pct.mito.vln.homeo.isl1.sib.10X

@@ -153,13 +153,14 @@ homeo.isl1_sib_10X <- FindClusters(homeo.isl1_sib_10X, resolution = 1.2)
 homeo.isl1_sib_10X <- RunUMAP(homeo.isl1_sib_10X, dims = 1:15, reduction = "pca")
 
 
-umap.homeo.isl1.sib.10X <- DimPlot(homeo.isl1_sib_10X, reduction = "umap",
+umap.unlabeled <- DimPlot(homeo.isl1_sib_10X, reduction = "umap",
   label = TRUE, pt.size= 0.4)
+umap.unlabeled
 
-umap.homeo.isl1.sib.10X
+
 png(figurePath("umap_clusters.png"),
   width = 11, height = 9, units = "in", res = 300)
-  print(umap.homeo.isl1.sib.10X)
+  print(umap.unlabeled)
 dev.off()
 
 ####Annotate Clusters####
@@ -210,7 +211,7 @@ for (x in levels(Idents(homeo.isl1_sib_10X))) {
 ####Identify Cluster Identity####
 #canonical marker lists
 polar.cells.markers <- c("sost", "adcyap1b", "six2b", "fsta", "wnt2", "srrt")
-hair.cells.markers <- c("atoh1a", "dld", "her4.1", "tekt3")
+hair.cells.markers <- c("atoh1a", "dld", "her4.1", "tekt3", "otofb", "atp1b2b", "atoh1b", "sox4a*1", "hes2.2")
 ap.cells.markers <- c("cx44.2", "fap", "fgf10a", "hmx2", "hmx3a", "mcf2lb", "nfasca", "pdgfaa", "prom1b", "ompb", "pip5k1bb", "si:ch73-261i21.5", "tnfsf10l3", "wdpcp", "wnt11r", "znf185")
 mantle.cells.markers <- c("cldne", "crb3b", "crip1", "cts12", "fat1b", "fgfr2", "map7d3", "mcama", "ovgp1", "pkhd1l1", "pknox2", "ponzr6", "rgs4", "sfrp1a", "stat3",
                           "sulf1",
@@ -237,39 +238,7 @@ central.cell.markers <- c("ccl20a.3","crabp2a","cxcl20", "dhrs3a", "dkk2", "fabp
 filter(all.markers.homeo.isl1_sib_10X, Gene.name.uniq == ap.cells.markers) %>% top_n(n = 5, wt = (avg_logFC)) %>% arrange(desc(avg_logFC))
 
 
-####Polar Cells####
-polar.cell.featureplot <-FeaturePlot(homeo.isl1_sib_10X, features = polar.cells.markers, label = TRUE) + ggtitle("Expression Levels of Polar Cell Markers")
-polar.cell.vlnplot <- VlnPlot(homeo.isl1_sib_10X, features = polar.cells.markers, pt.size  = 0)+ ggtitle("Expression Levels of Polar Cell Markers")
-#ars2 does not show up in all.marker.homeo, perhaps signal is too low?
-#0,8,11,6?
-
-####Hair Cell Lineage####
-hair.cell.featureplot <- FeaturePlot(homeo.isl1_sib_10X, features = hair.cells.markers, label = TRUE) + ggtitle("Expression Levels of Hair Cell Markers")
-hair.cell.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = hair.cells.markers, pt.size  = 0)+ ggtitle("Expression Levels of Hair Cell Markers")
-
-####A-P Cells####
-ap.cells.featureplt <- FeaturePlot(homeo.isl1_sib_10X, features = ap.cells.markers, label = TRUE) + ggtitle("Expression Levels of A-P Cell Markers")
-ap.cells.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = ap.cells.markers, pt.size = 0) + ggtitle("Expression Levels of A-P Cell Markers")
-
-####Mantle Cells####
-mantle.cells.featureplt <- FeaturePlot(homeo.isl1_sib_10X, features = mantle.cells.markers, label = TRUE)+ ggtitle("Expression Levels of Mantle Cell Markers")
-mantle.cells.vlnplt <-  VlnPlot(homeo.isl1_sib_10X, features = mantle.cells.markers, pt.size = 0) + ggtitle("Expression Levels of Mantle Cell Markers")
-#ERROR: The following requested variables were not found: lye, si:dkey−103g5.3
-
-
-####Ring#### 
-ring.cell.featureplt <- FeaturePlot(homeo.isl1_sib_10X, features = ring.cell.markers, label = TRUE)+ ggtitle("Expression Levels of Ring Cell Markers")
-ring.cell.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = ring.cell.markers, pt.size = 0)
-
-####Central Cells####
-#Part 1
-central.cells.featureplt <- FeaturePlot(homeo.isl1_sib_10X, features = central.cell.markers, label = TRUE)+ ggtitle("Expression Levels of Central Cell Markers")
-central.cells.vlnplt <- VlnPlot(homeo.isl1_sib_10X, features = central.cell.markers, pt.size = 0)+ ggtitle("Expression Levels of Central Cell Markers")
-#Error:The following requested variables were not found: hbgefb
-
-
-
-####FeaturePlotToPNG####
+####PeaturePlotToPNG####
 figure_dir <- "isl1_sib_counts_10X_figures"
 FeaturePlotToPng <- function(marker.list, dir_name) {
   for (x in marker.list){
@@ -327,30 +296,64 @@ Top10GeneCellIdentity <- function(marker.list, df){
   dev.off()
 }
 Top10GeneCellIdentity(marker.list = ap.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.ap.cell.clusters <- c("7", "15")
+r#ename.ap.cell.clusters <- c("7", "15")
 Top10GeneCellIdentity(marker.list = polar.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.polar.cell.cluster <- c("14", "6", "9")
+r#ename.polar.cell.cluster <- c("14", "6", "9")
 Top10GeneCellIdentity(marker.list = hair.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.hair.cell.cluster <- c("8", "10", "13", "16", "17", "18")
+r#ename.hair.cell.cluster <- c("8", "10", "13", "16", "17", "18")
 Top10GeneCellIdentity(marker.list = mantle.cells.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.mantle.cell.cluster <- c("2", "19","21", "22","0","3", "5")
+r#ename.mantle.cell.cluster <- c("2", "19","21", "22","0","3", "5")
 Top10GeneCellIdentity(marker.list = ring.cell.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.ring.cell.cluster <- c("20","24")
+r#ename.ring.cell.cluster <- c("20","24")
 Top10GeneCellIdentity(marker.list = central.cell.markers, df = all.markers.homeo.isl1_sib_10X)
-rename.central.cell.cluster <- c("1","11","4","19","12")
+r#ename.central.cell.cluster <- c("1","11","4","19","12")
+
+####Common Features- FeaturePlot####
+common_features <- scan(paste0("/Volumes/easystore/SIMR_2019/pio-lab/data/gene-lists/common_neuromast_features.txt"), what = "character")
+e <- FeaturePlot(homeo.isl1_sib_10X, common_features,
+                 reduction = "umap", pt.size = 0.25, combine = FALSE, label = TRUE)
+for (i in 1:length(e)) {
+  e[[i]] <- e[[i]] + NoLegend() + NoAxes()
+}
+png(figurePath("common_features.png"), width = 40,
+    height = 80, units = "in", res = 200)
+print(cowplot::plot_grid(plotlist = e, ncol = 4))
+dev.off()
+
+####Common Features- VlnPlot####
+common_features <- scan(paste0("/Volumes/easystore/SIMR_2019/pio-lab/data/gene-lists/common_neuromast_features.txt"), what = "character")
+e_vln <- VlnPlot(homeo.isl1_sib_10X, common_features, pt.size = 0.0, combine = FALSE )
+for (i in 1:length(e_vln)) {
+  e_vln[[i]] <- e_vln[[i]] + NoLegend() + NoAxes()
+}
+png(figurePath("vlnplot_common_feature.png"), width = 40,
+    height = 80, units = "in", res = 200)
+print(cowplot::plot_grid(plotlist = e_vln, ncol = 4))
+dev.off()
+
 
 ####Rename Clusters####
-for (x in rename.polar.cell.cluster){
-  
-  rename.umap <- RenameIdents(homeo.isl1_sib_10X, x = "Polar Cells")
-  print(x)
+meta <- homeo.isl1_sib_10X@meta.data
+colnames(meta)
+cells <- list("mature-HCs" = c(8,13,18), "early-HCs" = c(10,17),  "HC-prog" = 16,
+              "central-cells" = c(1, 11,4,6), "DV/AP-cells" = c(7,9),
+              "amplfying support" = 14, "mantle-cells" = c(0,3), "col1a1b-pos" = c(12),
+              "c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(15,22,5,2))
+meta$cell.type.ident <- factor(rep("", nrow(meta)),
+                               levels = names(cells), ordered = TRUE)
+for (i in 1:length(cells)) {
+  meta$cell.type.ident[meta$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
 }
-annotated.umap <- RenameIdents(homeo.isl1_sib_10X, c("14", "6", "9") = "Polar")
-umap <- DimPlot(homeo.isl1_sib_10X,reduction = "umap",
-        label = TRUE, pt.size= 0.4, repel = TRUE)
-#LabelClusters(umap, id = "ident", clusters = rename.polar.cell.cluster, labels = replicate(4, "Polar Cells"), repel = TRUE) 
+homeo.isl1_sib_10X@meta.data <- meta
+Idents(homeo.isl1_sib_10X) <- homeo.isl1_sib_10X@meta.data$cell.type.ident
 
-levels(homeo.isl1_sib_10X)
+umap.labeled <- DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE, pt.size= 0.4)
+
+####print labeled plot####
+png(figurePath("annotated_umap_clusters.png"),
+    width = 11, height = 9, units = "in", res = 300)
+print(umap.labeled)
+dev.off()
 ####Save Figures to PDF####
 pdf("./isl1_sib_counts_10X_figures/pct.mito.vln.homeo.isl1.sib.10X.pdf")
 pct.mito.vln.homeo.isl1.sib.10X

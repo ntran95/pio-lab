@@ -1,4 +1,16 @@
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts/")
+
+library(Seurat)
+# library(plotly)
+#install.packages("future")
+# library(future)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+# library(gridExtra)
+# library(ggrepel)
+library(ggrepel)
+library(stringr)
 script_name <- "fpkm_matrix_1828"
 
 readRDS("../data/fpkm_matrix_1828.RDS")
@@ -47,5 +59,20 @@ fpkm_matrix_1828_smartseq2 <- CreateSeuratObject(counts = fpkm_expression_mtx, p
 fpkm_matrix_1828_smartseq2
 #26320 features across 649 samples within 1 assay 
 
+#############Add percent.mt#####################
+fpkm_matrix_1828_smartseq2[["percent.mt"]] <- PercentageFeatureSet(fpkm_matrix_1828_smartseq2, pattern = "^mt-")
 
-#add treatments to metadata (1hr and homeo)
+
+############add treatments to metadata (1hr and homeo)###########
+meta_smartseq2 <- fpkm_matrix_1828_smartseq2@meta.data
+
+barcode <- rownames(meta_smartseq2)
+meta_smartseq2 <- meta_smartseq2%>% mutate(treatment =case_when(str_detect(barcode, "homeo") ~ "homeo", 
+                                                                str_detect(barcode, "1hr") ~ "1hr ",
+                                                                TRUE ~ barcode))
+#get barcode back as rownames
+rownames(meta_smartseq2) <- rownames(fpkm_matrix_1828_smartseq2@meta.data)
+
+#add to seurat metadata
+fpkm_matrix_1828_smartseq2@meta.data$treatment<- meta_smartseq2$treatment
+

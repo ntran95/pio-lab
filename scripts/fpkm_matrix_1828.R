@@ -24,8 +24,20 @@ row.names(gene_table) <- gene_table$Gene.stable.ID
 
 #matched <- cbind(fpkm_expression_mtx, gene_table[, "Gene.name.uniq"][match(rownames(fpkm_expression_mtx), rownames(gene_table))])
 
-new.mtx <- as.matrix(merge(fpkm_expression_mtx,gene_table["Gene.name.uniq"],by="row.names",all.x=TRUE))
+new.mtx <- merge(fpkm_expression_mtx,gene_table["Gene.name.uniq"],by="row.names",all.x=TRUE)
 
-#check to see if gene symbol [column 651] matches ENSGARG ensembl id (row 1)
+#check to see if gene symbol [column 651] matches ENSGARG ensembl id (row 1). gene symbol will be in last column
+#32489x 651
 new.mtx[1,c(1,651)]
+
+new.mtx[3, c(1,651)]
+
+#turn Gene.name.uniq into rownames
+new.mtx <- data.frame(new.mtx, row.names = "Gene.name.uniq")
+
+#delete ENSDARG column
+new.mtx$Row.names <- NULL
+
+
+
 #add treatments to metadata (1hr and homeo)

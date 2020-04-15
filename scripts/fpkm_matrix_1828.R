@@ -19,11 +19,11 @@ readRDS("../data/fpkm_matrix_1828.RDS")
 #variable fpkm_matrix_1828 contains 32489 (features) x 649 (cells) sparse Matrix of class "dgCMatrix"
 #similarly to Read10X(data.dir = "../data/etc/")
 #keep original matrix/object for reference
-fpkm_matrix_1828.data <- readRDS("../data/fpkm_matrix_1828.RDS")
+#fpkm_matrix_1828.data <- readRDS("../data/fpkm_matrix_1828.RDS")
 
-fpkm_matrix_1828_smartseq2 <- CreateSeuratObject(counts = fpkm_matrix_1828.data, project = "fpkm_smartseq2", min.cells = 1, min.features = 1)
+#fpkm_matrix_1828_smartseq2 <- CreateSeuratObject(counts = fpkm_matrix_1828.data, project = "fpkm_smartseq2", min.cells = 1, min.features = 1)
 
-fpkm_matrix_1828_smartseq2
+#fpkm_matrix_1828_smartseq2
 #26320 features across 649 samples within 1 assay 
 
 
@@ -85,9 +85,11 @@ seurat_obj_list <- c(homeo.isl1_sib_10X, fpkm_matrix_1828_smartseq2)
 dims = 1:15
 
 ##############Integration Loop###############
+##############Integration Loop###############
 SC_transform <- FALSE
 if (SC_transform) {
-  for (i in names(seurat_obj_list)) {
+  for (i in 1:length(seurat_obj_list)) {
+    print("hi")
     seurat_obj_list[[i]] <- SCTransform(
       seurat_obj_list[[i]], verbose = FALSE)
   }
@@ -103,7 +105,7 @@ if (SC_transform) {
                                   normalization.method = "SCT")
 } else {
   for (i in 1:length(seurat_obj_list)) {
-    seurat_obj_list[[i]] <- NormalizeData(seurat_obj_list[[i]], verbose = FALSE)
+    #seurat_obj_list[[i]] <- NormalizeData(seurat_obj_list[[i]], verbose = FALSE)
     seurat_obj_list[[i]] <- FindVariableFeatures(seurat_obj_list[[i]], selection.method = "vst",nfeatures = 2000, verbose = FALSE)
   }
   obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list,

@@ -19,13 +19,14 @@ readRDS("../data/fpkm_matrix_1828.RDS")
 #variable fpkm_matrix_1828 contains 32489 (features) x 649 (cells) sparse Matrix of class "dgCMatrix"
 #similarly to Read10X(data.dir = "../data/etc/")
 #keep original matrix/object for reference
-#fpkm_matrix_1828.data <- readRDS("../data/fpkm_matrix_1828.RDS")
+fpkm_matrix_1828.data <- readRDS("../data/fpkm_matrix_1828.RDS")
 
-#fpkm_matrix_1828_smartseq2 <- CreateSeuratObject(counts = fpkm_matrix_1828.data, project = "fpkm_smartseq2", min.cells = 1, min.features = 1)
+fpkm_matrix_1828_smartseq2 <- CreateSeuratObject(counts = fpkm_matrix_1828.data, project = "fpkm_smartseq2", min.cells = 1, min.features = 1)
 
-#fpkm_matrix_1828_smartseq2
+fpkm_matrix_1828_smartseq2
 #26320 features across 649 samples within 1 assay 
 
+fpkm_matrix_1828_smartseq2[["RNA"]]@counts <- 
 
 ###########convert rownames of fpkm expression matrix ()###########
 #load gene table
@@ -33,6 +34,7 @@ fpkm_expression_mtx <- readRDS("../data/fpkm_matrix_1828.RDS")
 gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
 as.matrix(gene_table)
 row.names(gene_table) <- gene_table$Gene.stable.ID
+#add gene name column with "_" instead of "-"
 #merge
 fpkm_expression_mtx <- merge(fpkm_expression_mtx,gene_table["Gene.name.uniq"],by="row.names",all.x=TRUE, sort = FALSE)
 
@@ -52,12 +54,44 @@ fpkm_expression_mtx <- as.matrix(fpkm_expression_mtx)
 dim(fpkm_expression_mtx)
 #dim 32489   649
 
+#replace "_" with "-" for gene names
+#based on Warning: Feature names cannot have underscores ('_'), replacing with dashes ('-')
+rownames(fpkm_expression_mtx) <- gsub("[_]", "-", rownames(fpkm_expression_mtx))
+
+#confirm that "_" replaced with "-"
+grep("_", rownames(fpkm_expression_mtx))
+
 ###############Create Seurat Object###############
 
-fpkm_matrix_1828_smartseq2 <- CreateSeuratObject(counts = fpkm_expression_mtx, project = "fpkm_smartseq2", min.cells = 1, min.features = 1)
+fpkm_matrix_1828_smartseq2corrected_gene <- CreateSeuratObject(counts = fpkm_expression_mtx, project = "fpkm_smartseq2", min.cells = 1, min.features = 1)
 
-fpkm_matrix_1828_smartseq2
-#26320 features across 649 samples within 1 assay 
+fpkm_matrix_1828_smartseq2corrected_gene
+#Error: Feature names of counts matrix cannot be empty
+
+################convert ensembl id to gene symbol after CreateSeuratObject################
+counts.mtx <- merge(as.data.frame(fpkm_matrix_1828_smartseq2[["RNA"]]@counts),as.data.frame(gene_table["Gene.name.uniq"]),by="row.names",all.x=TRUE, sort = FALSE)
+counts.mtx <- data.frame(counts.mtx, row.names = "Gene.name.uniq")
+#delete ENSDARG column
+counts.mtx$Row.names <- NULL
+#turn back to matrix
+counts.mtx <- as.matrix(counts.mtx)
+dim(counts.mtx)
+#26320   649
+#fpkm_matrix_1828_smartseq2 <- SetAssayData(object = fpkm_matrix_1828_smartseq2, slot = "counts", new.data = counts.mtx)
+dim(fpkm_matrix_1828_smartseq2[["RNA"]]@counts)
+
+#replace "_" with "-" for gene names
+#based on Warning: Feature names cannot have underscores ('_'), replacing with dashes ('-')
+corrected_counts_mtx <- gsub("[_]", "-",rownames(counts.mtx))
+
+rownames(fpkm_matrix_1828_smartseq2[["RNA"]]@counts) <- corrected_counts_mtx
+
+
+####################Convert object[["RNA]]@data (normalized data) to gene symbol################
+rownames(fpkm_matrix_1828_smartseq2[["RNA"]]@data) <- corrected_counts_mtx
+
+#check
+fpkm_matrix_1828_smartseq2[["RNA"]]@data
 
 #############Add percent.mt#####################
 fpkm_matrix_1828_smartseq2[["percent.mt"]] <- PercentageFeatureSet(fpkm_matrix_1828_smartseq2, pattern = "^mt-")
@@ -75,6 +109,7 @@ rownames(meta_smartseq2) <- rownames(fpkm_matrix_1828_smartseq2@meta.data)
 
 #add to seurat metadata
 fpkm_matrix_1828_smartseq2@meta.data$treatment<- meta_smartseq2$treatment
+
 
 ##########Load isl1_sib_10X_homeo Data#############
 load("../data/workspace_homeo_isl1_sib_10X.RData")
@@ -106,7 +141,7 @@ if (SC_transform) {
 } else {
   for (i in 1:length(seurat_obj_list)) {
     #seurat_obj_list[[i]] <- NormalizeData(seurat_obj_list[[i]], verbose = FALSE)
-    seurat_obj_list[[i]] <- FindVariableFeatures(seurat_obj_list[[i]], selection.method = "vst",nfeatures = 2000, verbose = FALSE)
+    seurat_obj_list[[i]] <- FindVariableFeatures(seurat_obj_list[[i]], selection.method = "vst",nfeatures = 2000, verbose = TRUE)
   }
   obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list,
                                         dims = dims, reference = 1) # 1 is the homeostatic dataset in obj list

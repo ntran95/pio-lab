@@ -409,3 +409,10 @@ dev.off()
 pdf("./isl1_sib_counts_10X_figures/HeatMap.Top50Markers.Homeo.isl1.pdf")
 HeatMap.Top50Markers.Homeo.isl1
 dev.off()
+
+
+#################Add Treatment column to metadata############
+homeo.isl1_sib_10X@meta.data$treatment <- "homeo"
+
+save.image("../data/workspace_homeo_isl1_sib_10X.RData")
+

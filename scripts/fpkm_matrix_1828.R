@@ -76,3 +76,49 @@ rownames(meta_smartseq2) <- rownames(fpkm_matrix_1828_smartseq2@meta.data)
 #add to seurat metadata
 fpkm_matrix_1828_smartseq2@meta.data$treatment<- meta_smartseq2$treatment
 
+##########Load isl1_sib_10X_homeo Data#############
+load("../data/workspace_homeo_isl1_sib_10X.RData")
+
+##########Seurat Object List#################
+#isl1_sib_10X_homeo is in first index
+seurat_obj_list <- c(homeo.isl1_sib_10X, fpkm_matrix_1828_smartseq2)
+dims = 1:15
+
+##############Integration Loop###############
+SC_transform <- FALSE
+if (SC_transform) {
+  for (i in names(seurat_obj_list)) {
+    seurat_obj_list[[i]] <- SCTransform(
+      seurat_obj_list[[i]], verbose = FALSE)
+  }
+  seurat_obj_features <- SelectIntegrationFeatures(
+    object.list = seurat_obj_list, nfeatures = 2000)
+  seurat_obj_list <- PrepSCTIntegration(
+    object.list = seurat_obj_list, anchor.features = seurat_obj_features)
+  # reference = 1 is the homeostatic dataset in obj list
+  obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list,
+                                        anchor.features = seurat_obj_features, normalization.method = "SCT",
+                                        dims = dims, reference = 1) 
+  obj_integrated <- IntegrateData(anchorset = obj_anchors, dims = dims,
+                                  normalization.method = "SCT")
+} else {
+  for (i in 1:length(seurat_obj_list)) {
+    seurat_obj_list[[i]] <- NormalizeData(seurat_obj_list[[i]], verbose = FALSE)
+    seurat_obj_list[[i]] <- FindVariableFeatures(seurat_obj_list[[i]], selection.method = "vst",nfeatures = 2000, verbose = FALSE)
+  }
+  obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list,
+                                        dims = dims, reference = 1) # 1 is the homeostatic dataset in obj list
+  obj_integrated <- IntegrateData(anchorset = obj_anchors, dims = dims)
+  DefaultAssay(obj_integrated) <- "integrated"
+}
+#obj_integrated@meta.data$data.set <- factor(obj_integrated@meta.data$data.set, ordered = TRUE, levels = ids)
+if (FALSE) {
+  saveRDS(obj_integrated, dataPath(
+    paste0("SeurObj_before_clust", "_", script_name,"_.RDS")))
+  obj_integrated <- readRDS(
+    dataPath(paste0("SeurObj_before_clust", "_", script_name,"_.RDS")))
+}
+# =========================================================== UMAP/Clustering
+if (!SC_transform) {
+  obj_integrated <- ScaleData(obj_integrated, verbose = FALSE)
+}

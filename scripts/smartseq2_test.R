@@ -37,7 +37,7 @@ fpkm_expression_mtx <- as.matrix(fpkm_expression_mtx)
 dim(fpkm_expression_mtx)
 #dim 32489   649
 
-rownames(fpkm_expression_mtx) <- gsub("[_*.]", "-", rownames(fpkm_expression_mtx))
+rownames(fpkm_expression_mtx) <- gsub("[_]", "-", rownames(fpkm_expression_mtx))
 colnames(fpkm_expression_mtx) <- gsub("[.]", "-", colnames(fpkm_expression_mtx))
 
 #rownames(fpkm_expression_mtx) <- gsub("[:]", "_", rownames(fpkm_expression_mtx))
@@ -51,11 +51,48 @@ is.null(rownames(fpkm_expression_mtx))
 fpkm_expression_mtx <- as.sparse(fpkm_expression_mtx)
 
 #export
-write.table(fpkm_expression_mtx, file="../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.tsv", col.names=TRUE, sep = "\t")
+write.table(fpkm_expression_mtx, file="../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.tsv", col.names=TRUE, row.names = TRUE, sep = "\t")
 
 counts.mtx <- read.table("../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.tsv", sep = "\t", header = TRUE)
+
+saveRDS(fpkm_expression_mtx, file = "../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.RDS")
+x <- read.table(file = system.file("../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.tsv", package = 'Seurat'),as.is = TRUE)
 
 ###############Create Seurat Object###############
 fpkm_matrix_1828_smartseq2 <- CreateSeuratObject(counts = as.sparse(fpkm_expression_mtx), project = "fpkm_smartseq2", min.cells = 1, min.features = 1)
 fpkm_matrix_1828_smartseq2
 #26320 features across 649 samples within 1 assay 
+
+
+
+###########################assign ensdarg id to homeo data##############
+isl1_sib_10X_count_matrix <- as.matrix(readRDS("../data/isl1_sib_counts_10X/isl1_sib_counts_10_matrix.RDS"))
+head(rownames(isl1_sib_10X_count_matrix))
+dim(isl1_sib_10X_count_matrix)
+
+
+#isl1_sib_10X_count_matrix<- merge(isl1_sib_10X_count_matrix,gene_table["Gene.stable.ID"],by="row.names",all.x=TRUE, sort = FALSE)
+
+head(rownames(isl1_sib_10X_count_matrix))
+
+head(isl1_sib_10X_count_matrix$Gene.stable.ID)
+
+row.names(isl1_sib_10X_count_matrix) <- isl1_sib_10X_count_matrix$Gene.stable.ID
+
+isl1_sib_10X_count_matrix$Row.names <- NULL
+isl1_sib_10X_count_matrix$Gene.name.uniq <- NULL
+
+dim(isl1_sib_10X_count_matrix)
+
+
+######
+load("../data/workspace_homeo_isl1_sib_10X.RData")
+
+isl1_info <- gene_table[gene_table$Gene.name.uniq %in% rownames(isl1_sib_10X_count_matrix),]
+new_isl1_sib_10X_matrix <- isl1_sib_10X_count_matrix[match(isl1_info$Gene.stable.ID, rownames(isl1_sib_10X_count_matrix)),]
+rownames(new_isl1_sib_10X_matrix) <- isl1_info$Gene.stable.ID
+
+saveRDS(new_isl1_sib_10X_matrix, file = "../data/isl1_sib_counts_10_matrix.RDS")
+
+isl1_test <- CreateSeuratObject(counts = new_isl1_sib_10X_matrix, project = "isl1_sib_homeo", min.cells = 0, min.features = 0)
+

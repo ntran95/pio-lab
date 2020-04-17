@@ -12,10 +12,17 @@ library(cowplot)
 library(ggrepel)
 library(stringr)
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts/")
-script_name <- "fpkm_matrix_1828"
 
-
-readRDS("../data/fpkm_matrix_1828/fpkm_matrix_1828.RDS")
+if (FALSE) {
+  setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
+  
+  script_name <- "fpkm_matrix_1828"
+  
+  figurePath <- function(filename, format){paste0("/Volumes/easystore/SIMR_2019",
+                                                  "/pio-lab/scripts/", script_name, "_figures/", filename)}
+  
+  #devtools::load_all("/n/projects/ddiaz/Analysis/Scripts/SeuratExtensions")
+}
 #reading in .rds, contains the expression matrix 
 #variable fpkm_matrix_1828 contains 32489 (features) x 649 (cells) sparse Matrix of class "dgCMatrix"
 #similarly to Read10X(data.dir = "../data/etc/")
@@ -61,8 +68,9 @@ which(rownames(x = fpkm_expression_mtx) == '')
 #[1] 11478
 print(rownames(fpkm_expression_mtx)[11478])
 #[1] ""
+#delete
 new_fpkm_expression_mtx <- fpkm_expression_mtx[-11478,]
-
+#turn to sparse matrix
 fpkm_expression_mtx <- as.sparse(fpkm_expression_mtx)
 
 #check
@@ -82,8 +90,8 @@ fpkm_matrix_1828_smartseq2[["percent.mt"]] <- PercentageFeatureSet(fpkm_matrix_1
 meta_smartseq2 <- fpkm_matrix_1828_smartseq2@meta.data
 
 barcode <- rownames(meta_smartseq2)
-meta_smartseq2 <- meta_smartseq2%>% mutate(treatment =case_when(str_detect(barcode, "homeo") ~ "homeo", 
-                                                                str_detect(barcode, "1hr") ~ "1hr ",
+meta_smartseq2 <- meta_smartseq2%>% mutate(treatment =case_when(str_detect(barcode, "homeo") ~ "homeo-smrtseq", 
+                                                                str_detect(barcode, "1hr") ~ "1hr-smrtseq",
                                                                 TRUE ~ barcode))
 #get barcode back as rownames
 rownames(meta_smartseq2) <- rownames(fpkm_matrix_1828_smartseq2@meta.data)
@@ -98,9 +106,33 @@ fpkm_matrix_1828_smartseq2@meta.data
 ##############Find Variable Features###########################
 fpkm_matrix_1828_smartseq2 <- FindVariableFeatures(fpkm_matrix_1828_smartseq2, selection.method = "vst",nfeatures = 2000, verbose = FALSE)
 
+####Clustering/UMAP####
+fpkm_matrix_1828_smartseq2 <- ScaleData(fpkm_matrix_1828_smartseq2, features = NULL, vars.to.regress = NULL, verbose = TRUE)
 
+fpkm_matrix_1828_smartseq2 <- RunPCA(fpkm_matrix_1828_smartseq2, npcs = 100, verbose = TRUE, features = NULL)
+
+fpkm_matrix_1828_smartseq2 <- FindNeighbors(fpkm_matrix_1828_smartseq2, dims = 1:15, features = NULL)
+
+fpkm_matrix_1828_smartseq2 <- FindClusters(fpkm_matrix_1828_smartseq2, resolution = 1.0)
+
+fpkm_matrix_1828_smartseq2 <- RunUMAP(fpkm_matrix_1828_smartseq2, dims = 1:15, reduction = "pca")
+
+fpkm_smart_seq2_unlabel_cluster <- DimPlot(fpkm_matrix_1828_smartseq2, reduction = "umap")
+
+head(fpkm_matrix_1828_smartseq2@meta.data)
+
+png(figurePath("fpkm_unlabeled_umap.png"),
+    width = 11, height = 9, units = "in", res = 300)
+print(fpkm_smart_seq2_unlabel_cluster)
+dev.off()
 ######Load########
 load("../data/workspace_homeo_isl1_sib_10X.RData")
+
+#######change treatment column of 10X Homeo#########
+homeo.isl1_sib_10X@meta.data$treatment <- "homeo-10X"
+#check
+head(homeo.isl1_sib_10X@meta.data)
+
 
 ##############Integration#####################
 
@@ -135,7 +167,7 @@ if (SC_transform) {
 }
 
 
-#obj_integrated@meta.data$data.set <- factor(obj_integrated@meta.data$data.set, ordered = TRUE, levels = ids)
+obj_integrated@meta.data$treatment <- factor(obj_integrated@meta.data$treatment, ordered = TRUE)
 if (FALSE) {
   saveRDS(obj_integrated, "../data/fpkm_matrix_1828/SeurObj_before_clust_smartseq_10X.RDS")
   #obj_integrated <- readRDS(dataPath(paste0("SeurObj_before_clust", "_", script_name,"_.RDS")))
@@ -145,8 +177,9 @@ if (FALSE) {
 if (!SC_transform) {
   obj_integrated <- ScaleData(obj_integrated, verbose = FALSE)
   obj_integrated <- RunPCA(obj_integrated, npcs = 100, verbose = TRUE, features = NULL)
-  obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:20)
-
+  obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:15)
+  obj_integrated <- FindNeighbors(obj_integrated, dims = 1:25)
+  obj_integrated <- FindClusters(obj_integrated, resolution = 1.2)
   
 }
 
@@ -160,6 +193,14 @@ JackStrawPlot(obj_integrated, reduction = "pca", dims = 1:35)
 
 
 ###################DImplit#######################
-DimPlot(obj_integrated, group.by  = "treatment", label = TRUE)
+obj_integrated_by_trt_umap <- DimPlot(obj_integrated, group.by  = "treatment", label = TRUE)
 
+png(figurePath("integrated_by_trt.png"),
+    width = 11, height = 9, units = "in", res = 300)
+print(obj_integrated_by_trt_umap)
+dev.off()
+
+DimPlot(obj_integrated, label = TRUE)
+
+save.image("../data/post-integrated-SeurObj.RData")
 

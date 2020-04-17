@@ -10,6 +10,7 @@ library(cowplot)
 # library(gridExtra)
 # library(ggrepel)
 library(ggrepel)
+library(stringr)
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts/")
 script_name <- "smartseq2_test"
 readRDS("../data/fpkm_matrix_1828/fpkm_matrix_1828.RDS")
@@ -89,57 +90,53 @@ rownames(meta_smartseq2) <- rownames(fpkm_matrix_1828_smartseq2@meta.data)
 fpkm_matrix_1828_smartseq2@meta.data$treatment<- meta_smartseq2$treatment
 
 
+fpkm_matrix_1828_smartseq2@meta.data
 
 
+##############Find Variable Features###########################
+fpkm_matrix_1828_smartseq2 <- FindVariableFeatures(fpkm_matrix_1828_smartseq2, selection.method = "vst",nfeatures = 2000, verbose = FALSE)
 
 
-
-
-#######################################################################################
-
-#export
-write.table(fpkm_expression_mtx, file="../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.tsv", col.names=TRUE, row.names = TRUE, sep = "\t")
-
-counts.mtx <- read.table("../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.tsv", sep = "\t", header = TRUE)
-
-saveRDS(fpkm_expression_mtx, file = "../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.RDS")
-x <- read.table(file = system.file("../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.tsv", package = 'Seurat'),as.is = TRUE)
-
-###############Create Seurat Object###############
-fpkm_matrix_1828_smartseq2 <- CreateSeuratObject(counts = as.sparse(fpkm_expression_mtx), project = "fpkm_smartseq2", min.cells = 1, min.features = 1)
-fpkm_matrix_1828_smartseq2
-#26320 features across 649 samples within 1 assay 
-
-
-
-###########################assign ensdarg id to homeo data##############
-isl1_sib_10X_count_matrix <- as.matrix(readRDS("../data/isl1_sib_counts_10X/isl1_sib_counts_10_matrix.RDS"))
-head(rownames(isl1_sib_10X_count_matrix))
-dim(isl1_sib_10X_count_matrix)
-
-
-#isl1_sib_10X_count_matrix<- merge(isl1_sib_10X_count_matrix,gene_table["Gene.stable.ID"],by="row.names",all.x=TRUE, sort = FALSE)
-
-head(rownames(isl1_sib_10X_count_matrix))
-
-head(isl1_sib_10X_count_matrix$Gene.stable.ID)
-
-row.names(isl1_sib_10X_count_matrix) <- isl1_sib_10X_count_matrix$Gene.stable.ID
-
-isl1_sib_10X_count_matrix$Row.names <- NULL
-isl1_sib_10X_count_matrix$Gene.name.uniq <- NULL
-
-dim(isl1_sib_10X_count_matrix)
-
-
-######
+######Load########
 load("../data/workspace_homeo_isl1_sib_10X.RData")
 
-isl1_info <- gene_table[gene_table$Gene.name.uniq %in% rownames(isl1_sib_10X_count_matrix),]
-new_isl1_sib_10X_matrix <- isl1_sib_10X_count_matrix[match(isl1_info$Gene.stable.ID, rownames(isl1_sib_10X_count_matrix)),]
-rownames(new_isl1_sib_10X_matrix) <- isl1_info$Gene.stable.ID
+##############Integration#####################
 
-saveRDS(new_isl1_sib_10X_matrix, file = "../data/isl1_sib_counts_10_matrix.RDS")
+#seurat_obj_list <- c(fpkm_matrix_1828_smartseq2, homeo.isl1_sib_10X)
+split_fpkm_smartseq <- SplitObject(fpkm_matrix_1828_smartseq2, split.by = "treatment")
+seurat_obj_list <- c(homeo.isl1_sib_10X, split_fpkm_smartseq[1], split_fpkm_smartseq[2])
+dims = 1:15
+SC_transform <- FALSE
 
-isl1_test <- CreateSeuratObject(counts = new_isl1_sib_10X_matrix, project = "isl1_sib_homeo", min.cells = 0, min.features = 0)
+if (SC_transform) {
+  for (i in 1:length(seurat_obj_list)) {
+    print("hi")
+    seurat_obj_list[[i]] <- SCTransform(
+      seurat_obj_list[[i]], verbose = FALSE)
+  }
+  seurat_obj_features <- SelectIntegrationFeatures(
+    object.list = seurat_obj_list, nfeatures = 2000)
+  seurat_obj_list <- PrepSCTIntegration(
+    object.list = seurat_obj_list, anchor.features = seurat_obj_features)
+  # reference = 1 is the homeostatic dataset in obj list
+  obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list,
+                                        anchor.features = seurat_obj_features, normalization.method = "SCT",
+                                        dims = dims, reference = 1) 
+  obj_integrated <- IntegrateData(anchorset = obj_anchors, dims = dims,
+                                  normalization.method = "SCT")
+} else {
+  ("hi")
+  obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list, dims = dims, reference = 1, verbose = TRUE) # 1 is the homeostatic dataset in obj list
+  obj_integrated <- IntegrateData(anchorset = obj_anchors, dims = dims, features.to.integrate	= rownames(homeo.isl1_sib_10X))
+  DefaultAssay(obj_integrated) <- "integrated"
+  print("hi")
+}
+#obj_integrated@meta.data$data.set <- factor(obj_integrated@meta.data$data.set, ordered = TRUE, levels = ids)
+if (FALSE) {
+  saveRDS(obj_integrated, dataPath(
+    paste0("SeurObj_before_clust", "_", script_name,"_.RDS")))
+  obj_integrated <- readRDS(
+    dataPath(paste0("SeurObj_before_clust", "_", script_name,"_.RDS")))
+}
+
 

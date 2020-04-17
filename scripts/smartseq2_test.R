@@ -159,15 +159,21 @@ if (SC_transform) {
   obj_integrated <- IntegrateData(anchorset = obj_anchors, dims = dims,
                                   normalization.method = "SCT")
 } else {
-  ("hi")
-  obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list, dims = dims, reference = 1, verbose = TRUE) # 1 is the homeostatic dataset in obj list
-  obj_integrated <- IntegrateData(anchorset = obj_anchors, dims = dims, features.to.integrate	= rownames(homeo.isl1_sib_10X))
+  for (i in 1:length(seurat_obj_list)) {
+    seurat_obj_list[[i]] <- NormalizeData(
+      seurat_obj_list[[i]], verbose = FALSE)
+    seurat_obj_list[[i]] <- FindVariableFeatures(
+      seurat_obj_list[[i]], selection.method = "vst",
+      nfeatures = 2000, verbose = FALSE)
+  }
+  obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list,
+                                        dims = dims, reference = 1) # 1 is the homeostatic dataset in obj list
+  obj_integrated <- IntegrateData(anchorset = obj_anchors, dims = dims)
   DefaultAssay(obj_integrated) <- "integrated"
-  print("hi")
 }
 
-
 obj_integrated@meta.data$treatment <- factor(obj_integrated@meta.data$treatment, ordered = TRUE)
+
 if (FALSE) {
   saveRDS(obj_integrated, "../data/fpkm_matrix_1828/SeurObj_before_clust_smartseq_10X.RDS")
   #obj_integrated <- readRDS(dataPath(paste0("SeurObj_before_clust", "_", script_name,"_.RDS")))
@@ -177,9 +183,9 @@ if (FALSE) {
 if (!SC_transform) {
   obj_integrated <- ScaleData(obj_integrated, verbose = FALSE)
   obj_integrated <- RunPCA(obj_integrated, npcs = 100, verbose = TRUE, features = NULL)
-  obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:15)
-  obj_integrated <- FindNeighbors(obj_integrated, dims = 1:25)
-  obj_integrated <- FindClusters(obj_integrated, resolution = 1.2)
+  obj_integrated <- FindNeighbors(obj_integrated, dims = 1:20)
+  obj_integrated <- FindClusters(obj_integrated, resolution = 1.0)
+  obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:20)
   
 }
 
@@ -193,14 +199,19 @@ JackStrawPlot(obj_integrated, reduction = "pca", dims = 1:35)
 
 
 ###################DImplit#######################
-obj_integrated_by_trt_umap <- DimPlot(obj_integrated, group.by  = "treatment", label = TRUE)
+obj_integrated_by_trt_umap <- DimPlot(obj_integrated, group.by  = "treatment", pt.size = 0.4) + DarkTheme() 
 
 png(figurePath("integrated_by_trt.png"),
     width = 11, height = 9, units = "in", res = 300)
 print(obj_integrated_by_trt_umap)
 dev.off()
 
-DimPlot(obj_integrated, label = TRUE)
+obj_integrated_unlabeled <- DimPlot(obj_integrated, label = TRUE, pt.size = 0.4) + DarkTheme() + NoLegend()
+
+png(figurePath("integrated_umap_unlabelled.png"),
+    width = 11, height = 9, units = "in", res = 300)
+print(obj_integrated_unlabeled)
+dev.off()
 
 save.image("../data/post-integrated-SeurObj.RData")
 

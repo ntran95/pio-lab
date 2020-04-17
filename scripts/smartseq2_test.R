@@ -1,5 +1,17 @@
+####Set up environment####
+#install.packages("Seurat")
+library(Seurat)
+# library(plotly)
+#install.packages("future")
+# library(future)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+# library(gridExtra)
+# library(ggrepel)
+library(ggrepel)
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts/")
-script_name <- "fpkm_matrix_1828"
+script_name <- "smartseq2_test"
 readRDS("../data/fpkm_matrix_1828/fpkm_matrix_1828.RDS")
 #reading in .rds, contains the expression matrix 
 #variable fpkm_matrix_1828 contains 32489 (features) x 649 (cells) sparse Matrix of class "dgCMatrix"
@@ -16,7 +28,7 @@ fpkm_matrix_1828_smartseq2
 
 ###########convert rownames of fpkm expression matrix ()###########
 #load gene table
-fpkm_expression_mtx <- readRDS("../fpkm_matrix_1828/data/fpkm_matrix_1828.RDS")
+fpkm_expression_mtx <- readRDS("../data/fpkm_matrix_1828/fpkm_matrix_1828.RDS")
 gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
 as.matrix(gene_table)
 row.names(gene_table) <- gene_table$Gene.stable.ID
@@ -40,15 +52,50 @@ dim(fpkm_expression_mtx)
 rownames(fpkm_expression_mtx) <- gsub("[_]", "-", rownames(fpkm_expression_mtx))
 colnames(fpkm_expression_mtx) <- gsub("[.]", "-", colnames(fpkm_expression_mtx))
 
-#rownames(fpkm_expression_mtx) <- gsub("[:]", "_", rownames(fpkm_expression_mtx))
-#rownames(fpkm_expression_mtx) <- gsub("[*]", "-", rownames(fpkm_expression_mtx))
-#rownames(fpkm_expression_mtx) <- gsub("[_]", "", rownames(fpkm_expression_mtx))
 
-
-gene_vector <- rownames(fpkm_expression_mtx)
-is.null(rownames(fpkm_expression_mtx))
+#check if rownames is empty
+which(rownames(x = fpkm_expression_mtx) == '')
+#[1] 11478
+print(rownames(fpkm_expression_mtx)[11478])
+#[1] ""
+new_fpkm_expression_mtx <- fpkm_expression_mtx[-11478,]
 
 fpkm_expression_mtx <- as.sparse(fpkm_expression_mtx)
+
+#check
+dim(new_fpkm_expression_mtx)
+#[1] 32488   649
+
+which(rownames(x = new_fpkm_expression_mtx) == '')
+#integer(0)
+
+#####################Create Seurat Object############################
+fpkm_matrix_1828_smartseq2 <- CreateSeuratObject(counts = new_fpkm_expression_mtx, project = "fpkm_smartseq2", min.cells = 1, min.features = 1)
+
+#############Add percent.mt#####################
+fpkm_matrix_1828_smartseq2[["percent.mt"]] <- PercentageFeatureSet(fpkm_matrix_1828_smartseq2, pattern = "^mt-")
+
+############add treatments to metadata (1hr and homeo)###########
+meta_smartseq2 <- fpkm_matrix_1828_smartseq2@meta.data
+
+barcode <- rownames(meta_smartseq2)
+meta_smartseq2 <- meta_smartseq2%>% mutate(treatment =case_when(str_detect(barcode, "homeo") ~ "homeo", 
+                                                                str_detect(barcode, "1hr") ~ "1hr ",
+                                                                TRUE ~ barcode))
+#get barcode back as rownames
+rownames(meta_smartseq2) <- rownames(fpkm_matrix_1828_smartseq2@meta.data)
+
+#add to seurat metadata
+fpkm_matrix_1828_smartseq2@meta.data$treatment<- meta_smartseq2$treatment
+
+
+
+
+
+
+
+
+#######################################################################################
 
 #export
 write.table(fpkm_expression_mtx, file="../data/fpkm_matrix_1828/corr_gene_fpkm_matrix_1228.tsv", col.names=TRUE, row.names = TRUE, sep = "\t")

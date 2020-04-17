@@ -12,7 +12,9 @@ library(cowplot)
 library(ggrepel)
 library(stringr)
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts/")
-script_name <- "smartseq2_test"
+script_name <- "fpkm_matrix_1828"
+
+
 readRDS("../data/fpkm_matrix_1828/fpkm_matrix_1828.RDS")
 #reading in .rds, contains the expression matrix 
 #variable fpkm_matrix_1828 contains 32489 (features) x 649 (cells) sparse Matrix of class "dgCMatrix"
@@ -131,12 +133,33 @@ if (SC_transform) {
   DefaultAssay(obj_integrated) <- "integrated"
   print("hi")
 }
+
+
 #obj_integrated@meta.data$data.set <- factor(obj_integrated@meta.data$data.set, ordered = TRUE, levels = ids)
 if (FALSE) {
-  saveRDS(obj_integrated, dataPath(
-    paste0("SeurObj_before_clust", "_", script_name,"_.RDS")))
-  obj_integrated <- readRDS(
-    dataPath(paste0("SeurObj_before_clust", "_", script_name,"_.RDS")))
+  saveRDS(obj_integrated, "../data/fpkm_matrix_1828/SeurObj_before_clust_smartseq_10X.RDS")
+  #obj_integrated <- readRDS(dataPath(paste0("SeurObj_before_clust", "_", script_name,"_.RDS")))
 }
+
+# =========================================================== UMAP/Clustering
+if (!SC_transform) {
+  obj_integrated <- ScaleData(obj_integrated, verbose = FALSE)
+  obj_integrated <- RunPCA(obj_integrated, npcs = 100, verbose = TRUE, features = NULL)
+  obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:20)
+
+  
+}
+
+####################Elbow######################
+ElbowPlot(obj_integrated, ndims = 40)
+
+####################JackStraw##################
+obj_integrated <- JackStraw(obj_integrated, num.replicate = 100, dims = 35)
+obj_integrated <- ScoreJackStraw(obj_integrated, dims = 1:35)
+JackStrawPlot(obj_integrated, reduction = "pca", dims = 1:35)
+
+
+###################DImplit#######################
+DimPlot(obj_integrated, group.by  = "treatment", label = TRUE)
 
 

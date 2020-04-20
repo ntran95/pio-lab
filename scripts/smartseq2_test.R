@@ -139,6 +139,12 @@ head(homeo.isl1_sib_10X@meta.data)
 #seurat_obj_list <- c(fpkm_matrix_1828_smartseq2, homeo.isl1_sib_10X)
 split_fpkm_smartseq <- SplitObject(fpkm_matrix_1828_smartseq2, split.by = "treatment")
 seurat_obj_list <- c(homeo.isl1_sib_10X, split_fpkm_smartseq[1], split_fpkm_smartseq[2])
+#find common/shared genes among the three seurat objects (for IntegrateData())
+all_shared_genes <- lapply(seurat_obj_list, row.names) %>% Reduce(intersect, .) 
+
+all_shared_genes
+
+
 dims = 1:15
 SC_transform <- FALSE
 
@@ -151,7 +157,7 @@ if (SC_transform) {
   seurat_obj_features <- SelectIntegrationFeatures(
     object.list = seurat_obj_list, nfeatures = 2000)
   seurat_obj_list <- PrepSCTIntegration(
-    object.list = seurat_obj_list, anchor.features = seurat_obj_features)
+    object.list = seurat_obj_list, anchor.features = all_shared_genes)
   # reference = 1 is the homeostatic dataset in obj list
   obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list,
                                         anchor.features = seurat_obj_features, normalization.method = "SCT",
@@ -168,7 +174,7 @@ if (SC_transform) {
   }
   obj_anchors <- FindIntegrationAnchors(object.list = seurat_obj_list,
                                         dims = dims, reference = 1) # 1 is the homeostatic dataset in obj list
-  obj_integrated <- IntegrateData(anchorset = obj_anchors, dims = dims)
+  obj_integrated <- IntegrateData(anchorset = obj_anchors, dims = dims, features.to.integrate = all_shared_genes)
   DefaultAssay(obj_integrated) <- "integrated"
 }
 
@@ -206,7 +212,7 @@ png(figurePath("integrated_by_trt.png"),
 print(obj_integrated_by_trt_umap)
 dev.off()
 
-obj_integrated_unlabeled <- DimPlot(obj_integrated, label = TRUE, pt.size = 0.4) + DarkTheme() + NoLegend()
+obj_integrated_unlabeled <- DimPlot(obj_integrated, label = TRUE, pt.size = 0.4) + NoLegend()
 
 png(figurePath("integrated_umap_unlabelled.png"),
     width = 11, height = 9, units = "in", res = 300)
@@ -215,3 +221,48 @@ dev.off()
 
 save.image("../data/post-integrated-SeurObj.RData")
 
+###############################FindAllMarkers###############################
+
+all.markers.integrated <- FindAllMarkers(obj_integrated, only.pos = FALSE, min.pct = 0.01, logfc.threshold = 0.01, return.thresh = 0.001, verbose = TRUE)
+
+###############################Annotate#####################################
+common_features <- scan(paste0("/Volumes/easystore/SIMR_2019/pio-lab/data/gene-lists/common_neuromast_features.txt"), what = "character")
+integrated_featplt <- FeaturePlot(obj_integrated, common_features,
+                 reduction = "umap", pt.size = 0.25, combine = FALSE, label = TRUE)
+for (i in 1:length(integrated_featplt)) {
+  integrated_featplt[[i]] <- integrated_featplt[[i]] + NoLegend() + NoAxes()
+}
+png(figurePath("common_features.png"), width = 40,
+    height = 80, units = "in", res = 200)
+print(cowplot::plot_grid(plotlist = integrated_featplt, ncol = 4))
+dev.off()
+
+################################VlnPlot#########################################
+integrated_vln <- VlnPlot(obj_integrated, common_features,pt.size = 0.0, combine = FALSE, log = TRUE)
+for (i in 1:length(integrated_vln)) {
+  integrated_vln[[i]] <- integrated_vln[[i]] + NoLegend() + NoAxes()
+}
+png(figurePath("vln_common_features.png"), width = 40,
+    height = 80, units = "in", res = 200)
+print(cowplot::plot_grid(plotlist = integrated_vln, ncol = 4))
+dev.off()
+
+
+####Rename Clusters####
+meta_integrated <- obj_integrated@meta.data
+colnames(meta_integrated)
+cells <- list("mature-HCs" = c(8,13,18), "early-HCs" = c(10,17),  "HC-prog" = 16,
+              "central-cells" = c(1, 11,4,6), "DV/AP-cells" = c(7,9),
+              "amplfying support" = 14, "mantle-cells" = c(0,3), "col1a1b-pos" = c(12),
+              "c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(15,22,5,2), "apoa1b-pos" = 23, "mfap4-pos" = 21, "krt91-pos" = 24)
+meta_integrated$cell.type.ident <- factor(rep("", nrow(meta_integrated)),
+                               levels = names(cells), ordered = TRUE)
+for (i in 1:length(cells)) {
+  meta_integrated$cell.type.ident[meta_integrated$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
+}
+obj_integrated@meta.data <- meta_integrated
+Idents(obj_integrated) <- obj_integrated@meta.data$cell.type.ident
+
+
+##############Common Features Metadata#############################
+marker.ident <- c("early-HC", "early-HC", "early-HC", "")

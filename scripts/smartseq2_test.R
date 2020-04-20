@@ -251,10 +251,10 @@ dev.off()
 ####Rename Clusters####
 meta_integrated <- obj_integrated@meta.data
 colnames(meta_integrated)
-cells <- list("mature-HCs" = c(8,13,18), "early-HCs" = c(10,17),  "HC-prog" = 16,
-              "central-cells" = c(1, 11,4,6), "DV/AP-cells" = c(7,9),
-              "amplfying support" = 14, "mantle-cells" = c(0,3), "col1a1b-pos" = c(12),
-              "c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(15,22,5,2), "apoa1b-pos" = 23, "mfap4-pos" = 21, "krt91-pos" = 24)
+cells <- list("mature-HCs" = c(10,15), "early-HCs" = c(9,13),  "HC-prog" = 14,
+              "central-cells" = c(0,2,3), "D/V Pole" = 8, "A/P Pole" = 6,
+              "amplfying support" = 11, "mantle-cells" = c(4,7), "col1a1b-pos" = c(12),
+              "c1qtnf5-pos" = 18, "col1a2-pos" = 12, "interneuromast" = c(1,5), "apoa1b-pos" = 20, "mfap4-pos" = 19, "krt91-pos" = 17)
 meta_integrated$cell.type.ident <- factor(rep("", nrow(meta_integrated)),
                                levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {
@@ -265,4 +265,12 @@ Idents(obj_integrated) <- obj_integrated@meta.data$cell.type.ident
 
 
 ##############Common Features Metadata#############################
-marker.ident <- c("early-HC", "early-HC", "early-HC", "")
+marker.ident <- c("early-HC", "early-HC", "early-HC", "mature-HC", "early-HC",
+                  "prog-HC", "prog-HC", "prog-HC", "prog-HC", "early-HC",
+                  "prog-HC", "prog-HC", "prog-HC", "prog-HC", "prog-HC",
+                  "prog-HC", "early-HC", "D/V Pole", "D/V Pole", "Mantle",
+                  "Mantle", "Mantle", "Amplifying Support", "Amplifying Support", "Central",
+                  "Central", "Central", "Central", "Central", "Central",
+                  "AP Pole", "AP Pole", "AP Pole", "Common neuromast cell types", "Interneuromast",
+                  "Interneuromast/Mantle")
+common_features_meta <- data.frame(common_features, marker.ident)

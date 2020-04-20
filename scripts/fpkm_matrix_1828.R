@@ -177,6 +177,8 @@ if (!SC_transform) {
 
 save.image("../data/pre_integrated_SeurObj.RData")
 
+###########################assign ensdarg id to homeo data##############
+homeo_counts_mtx <- as.matrix(homeo.isl1_sib_10X[["RNA"]]@counts)
+new_homeo_counts_mtx <- merge(homeo_counts_mtx,gene_table["Gene.stable.ID"],by="row.names",all.x=TRUE, sort = FALSE)
 
-homeo_counts_mtx <- isl1_sib_10X.data
 

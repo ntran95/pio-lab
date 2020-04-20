@@ -254,7 +254,7 @@ colnames(meta_integrated)
 cells <- list("mature-HCs" = c(10,15), "early-HCs" = c(9,13),  "HC-prog" = 14,
               "central-cells" = c(0,2,3), "D/V Pole" = 8, "A/P Pole" = 6,
               "amplfying support" = 11, "mantle-cells" = c(4,7), "col1a1b-pos" = c(12),
-              "c1qtnf5-pos" = 18, "col1a2-pos" = 12, "interneuromast" = c(1,5), "apoa1b-pos" = 20, "mfap4-pos" = 19, "krt91-pos" = 17)
+              "c1qtnf5-pos" = 18, "col1a2-pos" = 12, "interneuromast" = c(1,5), "apoa1b-pos" = 20, "mfap4-pos" = 19, "aqp8a.1" = 16, "krt91-pos" = 17)
 meta_integrated$cell.type.ident <- factor(rep("", nrow(meta_integrated)),
                                levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {
@@ -262,6 +262,14 @@ for (i in 1:length(cells)) {
 }
 obj_integrated@meta.data <- meta_integrated
 Idents(obj_integrated) <- obj_integrated@meta.data$cell.type.ident
+
+integrated.umap.labeled <- DimPlot(obj_integrated, reduction = "umap", label = TRUE, pt.size= 0.4) + NoLegend()
+
+####print labeled plot####
+png(figurePath("annotated_umap_clusters.png"),
+    width = 11, height = 9, units = "in", res = 300)
+print(integrated.umap.labeled)
+dev.off()
 
 
 ##############Common Features Metadata#############################

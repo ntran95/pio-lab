@@ -100,17 +100,20 @@ fpkm_matrix_1828_smartseq2@meta.data
 #note: normalization step for smartseq2 object is skipped, only specifically for this step
 # =========================================================== Add 10X Homeo data ==========================
 
-isl1_sib_10X.data <- Read10X(data.dir = "../data/isl1_sib_counts_10X")
+#isl1_sib_10X.data <- Read10X(data.dir = "../data/isl1_sib_counts_10X")
 
-homeo.isl1_sib_10X <- CreateSeuratObject(counts = isl1_sib_10X.data, project = "homeo.isl1.sib.10X", min.cells = 1, min.features = 1)
+#homeo.isl1_sib_10X <- CreateSeuratObject(counts = isl1_sib_10X.data, project = "homeo.isl1.sib.10X", min.cells = 1, min.features = 1)
 
-homeo.isl1_sib_10X[["percent.mt"]] <- PercentageFeatureSet(homeo.isl1_sib_10X, pattern = "^mt-")
+#homeo.isl1_sib_10X[["percent.mt"]] <- PercentageFeatureSet(homeo.isl1_sib_10X, pattern = "^mt-")
 
-homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10 & nCount_RNA <10000) 
+#homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10 & nCount_RNA <10000) 
 
-homeo.isl1_sib_10X <- NormalizeData(homeo.isl1_sib_10X, normalization.method = "LogNormalize", scale.factor = 10000, verbose = TRUE)
+#homeo.isl1_sib_10X <- NormalizeData(homeo.isl1_sib_10X, normalization.method = "LogNormalize", scale.factor = 10000, verbose = TRUE)
 
-homeo.isl1_sib_10X
+#homeo.isl1_sib_10X
+
+load("../data/workspace_homeo_isl1_sib_10X.RData")
+
 # =========================================================== Modify 10X metadata ===========================
 
 homeo.isl1_sib_10X@meta.data$data.set <- "homeo-10X"
@@ -172,13 +175,26 @@ if (!SC_transform) {
   
 }
 
-obj_integrated_by_trt_umap <- DimPlot(obj_integrated, group.by  = "data.set", pt.size = 0.4) + DarkTheme() 
+obj_integrated_by_trt_umap <- DimPlot(obj_integrated, group.by  = "treatment", pt.size = 0.4) + DarkTheme() 
 
-obj_integrated_by_trt_umap
+png(figurePath("integrated_by_trt.png"),
+    width = 11, height = 9, units = "in", res = 300)
+print(obj_integrated_by_trt_umap)
+dev.off()
+
+obj_integrated_by_dataset_umap <- DimPlot(obj_integrated, group.by  = "data.set", pt.size = 0.4) + DarkTheme() 
+
+png(figurePath("integrated_by_dataset.png"),
+    width = 11, height = 9, units = "in", res = 300)
+print(obj_integrated_by_dataset_umap)
+dev.off()
 
 obj_integrated_unlabeled <- DimPlot(obj_integrated, label = TRUE, pt.size = 0.4) + NoLegend()
 
-obj_integrated_unlabeled
+png(figurePath("integrated_umap_unlabelled.png"),
+    width = 11, height = 9, units = "in", res = 300)
+print(obj_integrated_unlabeled)
+dev.off()
 
 
 # ===========================================================  Common Features # =========================================================== 
@@ -215,6 +231,37 @@ print(cowplot::plot_grid(plotlist = integrated_vln, ncol = 4))
 dev.off()
 
 # ===========================================================  FindAllMarkers ===========================================
-plan("multiprocess")
+#plan("multiprocess")
 all.markers.integrated <- FindAllMarkers(obj_integrated, only.pos = FALSE, min.pct = 0.01, logfc.threshold = 0.01, return.thresh = 0.001, verbose = TRUE)
 
+#change the column name formerally called "gene" generated from FindAllMarkers() to  "Gene.name.uniq" so we can merge with gene_table
+#must have same column name in order to match genes
+colnames(all.markers.integrated)[7] <- "Gene.name.uniq"
+
+#inspect new col name change
+names(all.markers.integrated)
+
+#merge gene table with all markers generated based on uniq gene symbol
+all.markers.integrated <- merge(all.markers.integrated, gene_table, by = "Gene.name.uniq") 
+####Rename Clusters####
+meta_integrated <- obj_integrated@meta.data
+colnames(meta_integrated)
+cells <- list("mature-HCs" = c(9,13), "early-HCs" = c(8,12),  "HC-prog" = 14,
+              "central-cells" = c(7,4,1), "DV/AP Pole" = 3,
+              "amplfying support" = c(10,16), "mantle-cells" = c(0,5), "col1a1b-pos" = 11,
+              "c1qtnf5-pos" = 17, "interneuromast" = c(2,6), "apoa1b-pos" = 20, "mfap4-pos" = 19, "krt91-pos" = 18, "clec14a" =15)
+meta_integrated$cell.type.ident <- factor(rep("", nrow(meta_integrated)),
+                                          levels = names(cells), ordered = TRUE)
+for (i in 1:length(cells)) {
+  meta_integrated$cell.type.ident[meta_integrated$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
+}
+obj_integrated@meta.data <- meta_integrated
+Idents(obj_integrated) <- obj_integrated@meta.data$cell.type.ident
+
+integrated.umap.labeled <- DimPlot(obj_integrated, reduction = "umap", label = TRUE, pt.size= 0.4) + NoLegend()
+
+####print labeled plot####
+png(figurePath("annotated_umap_clusters.png"),
+    width = 11, height = 9, units = "in", res = 300)
+print(integrated.umap.labeled)
+dev.off()

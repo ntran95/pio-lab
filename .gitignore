@@ -1,4 +1,6 @@
 /data/isl1_sib_counts_10X/
 /data/*.rds
 /data/*.RData
+/data/*.tsv
+/data/*.txt
 scripts/isl1_sib_counts_10X_figures/._*

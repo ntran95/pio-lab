@@ -534,12 +534,20 @@ Conclusion: despite reparameterizing to regress the UMI variation during the sca
 ![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/hist-10X.png)
 ![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/hist-smartseq2.png)
 
-Logging on to stowers portal using ssh
+#### Setting up ssh tunnel
 
 ```{bash, eval=FALSE}
-ssh nt2473@access.stowers.org
-ssh nt2473@maple
-nt2473@maple ~$ cd /n
+#get into .config file on local machine
+nano ~/.ssh/config
+Host maple
+User nt2473
+ProxyCommand ssh nt2473@access.stowers.org exec nc %h %p 
+ssh maple
+
+#server xi18050533 is Piostrowski's general server
+# 2 Nvidia RTX 2080 Ti GPUs
+#12 threads
+
 ```
 
 

@@ -155,4 +155,37 @@ DGEtable <- function(seurat_obj, ident.1, ident.2) {
   return(df)
 }
 
-DGEtable(obj_integrated, ident.1 = "central-cells_1hr", ident.2 = "central-cells_homeo")
+central.1hr.v.homeo <- DGEtable(obj_integrated, ident.1 = "central-cells_1hr", ident.2 = "central-cells_homeo")
+
+central.1hr.v.homeo %>% select(Gene.name.uniq,avg_logFC) %>% filter(avg_logFC > 0.0) %>% pull(Gene.name.uniq)
+
+DGEtable(obj_integrated, ident.1 = "central-cells_1hr", ident.2 = c("central-cells_homeo", "mantle-cells_homeo"))
+
+# =========================================================== Measure UMI Abundance
+options(scipen = 100, digits = 4)
+png(figurePath("UMIAbundance.png"), width = 10,
+    height = 6, units = "in", res = 400)
+boxplot(homeo.isl1_sib_10X@meta.data$nCount_RNA, fpkm_matrix_1828_smartseq2@meta.data$nCount_RNA, 
+        notch = TRUE, log = "y", names = c("10X", "Smartseq2"), 
+        main = "UMI Abundance Comparison B/T 10X and SmartSeq2", col = c("lightblue", "purple"), 
+        las=1, font.axis=1)
+abline(h=mean(homeo.isl1_sib_10X@meta.data$nCount_RNA), lty = 2, col = "lightblue",)
+abline(h=mean(fpkm_matrix_1828_smartseq2@meta.data$nCount_RNA), lty = 2, col = "purple")
+axis(side=2, at=1861, labels = TRUE, las = 1, font.axis=1)
+axis(side=2, at=2470, labels = TRUE, las = 1, font.axis=1)
+axis(side=2, at=904524, labels = TRUE, las = 1, font.axis=1)
+dev.off()
+
+png(figurePath("hist-10X.png"), width = 10,
+    height = 6, units = "in", res = 400)
+hist(homeo.isl1_sib_10X@meta.data$nCount_RNA, main = "UMI Abundance-10X",
+     xlab = "10X", col = "lightblue")
+dev.off()
+
+png(figurePath("hist-smartseq2.png"), width = 10,
+    height = 6, units = "in", res = 400)
+hist(fpkm_matrix_1828_smartseq2@meta.data$nCount_RNA,
+     main = "UMI Abundance-SmartSeq2",
+     xlab = "SmartSeq2",
+     col = "purple")
+dev.off()

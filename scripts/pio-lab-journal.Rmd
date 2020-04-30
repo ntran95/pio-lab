@@ -315,7 +315,7 @@ kable(head(read.table(file = '../data/central.dge.df.tsv', sep = '\t', header = 
 
 #### Weekly Meeting To-Do List April 22:
 
-* provide metrics on the differences UMI abundance/ features:cell abundance between 10X and fpkm
+* provide metrics on the differences UMI abundance/ features:cell abundance between 10X and smartseq
 
 * provide DGE of more than 10 genes, note that sequencing depth differs between smartseq and 10X
 
@@ -328,23 +328,31 @@ kable(head(read.table(file = '../data/central.dge.df.tsv', sep = '\t', header = 
 
 #### Cell Ranger
 
-two homeo samples are located in the following dir after logging on to Stowers Portal
+three homeo samples are located in the following dir after logging on to Stowers Portal
 
 ```Index of /n/analysis/Piotrowski/sb2191/MOLNG-2410/HK3H3BCX2/HK3H3BCX2``` within the ```webfs``` link
 
+```/n/analysis/Piotrowski/sb2191/MOLNG-2410/HK3H3BCX2/HK3H3BCX2/L34727```
+
+```/n/analysis/Piotrowski/sb2191/MOLNG-2410/HK3H3BCX2/HK3H3BCX2/L34728```
+
+```/n/analysis/Piotrowski/heb/MOLNG-2047/HLC2NBCXY/L29314```
+
+
+
 installing wget to download .fq files from stowers portal
 
-```{bash, eval=false}
-503   brew install wget
+
+```503   brew install wget
   504  sudo chown -R $(whoami) /usr/local/lib/pkgconfig /usr/local/share/man/man3 /usr/local/share/man/man5
   505  chmod u+w /usr/local/lib/pkgconfig /usr/local/share/man/man3 /usr/local/share/man/man5
-  506   brew install wget
-```
+  506   brew install wget```
+
 
 **original script**
 
-```{bash,eval=false}
-#!/bin/bash
+
+```#!/bin/bash
 #SBATCH --account=bgmp
 #SBATCH --partition=bgmp
 #SBATCH --time=0-15:00:00
@@ -364,31 +372,27 @@ ml cellranger/3.0.2
 --transcriptome=/projects/bgmp/ntran2/SIMR_2019/cellranger/refdata-cellranger-GRCh38-3.0.0 \
 --fastqs=/home/ntran2/bgmp/SIMR_2019/cellranger/L34727/ \
 --sample=L34727 \
---localmem=200
-```
+--localmem=200```
+
 
 Error in .out file:
-```
-Checking reference_path (/projects/bgmp/ntran2/SIMR_2019/cellranger/ens98_danRer11_cellranger-2.1.0/) on n225...
 
-[error] Your reference does not contain the expected files, or they are not readable. Please check your reference folder on n225.
-```
+
+```Checking reference_path (/projects/bgmp/ntran2/SIMR_2019/cellranger/ens98_danRer11_cellranger-2.1.0/) on n225...
+
+[error] Your reference does not contain the expected files, or they are not readable. Please check your reference folder on n225.```
+
+
 This may be due to a version clash. Talapas uses cellranger/3.0.2, reference directory shows as ```ens98_danRer11_cellranger-2.1.0```
 
+Solution: create a custom ens98 reference genome using ```mkref```
 
-```
-[ntran2@talapas-ln1 cellranger]$ wc -l Danio_rerio.GRCz11.98.chr.gtf
-1153789 Danio_rerio.GRCz11.98.chr.gtf
-[ntran2@talapas-ln1 cellranger]$ wc -l Danio_rerio.GRCz11.98.gtf 
-1161870 Danio_rerio.GRCz11.98.gtf
-``` 
 opt for Danio_rerio.GRCz11.98.gtf as reference gft because it has more lines compared to Danio_rerio.GRCz11.98.chr.gtf (as noted by Daniel)
 
 
 Error Msg:
 
-```
-[ntran2@talapas-ln1 chnk1-u7ca7a31ba9]$ cat _stdout 
+```[ntran2@talapas-ln1 chnk1-u7ca7a31ba9]$ cat _stdout 
 [stdout]
 chunk_reads vVERSION
 chunks: [("R1", "/home/ntran2/bgmp/SIMR_2019/mkref_core_bio_gft/L34727/L34727_S1_L002_R1_001.fastq.gz", false), ("R2", "/home/ntran2/bgmp/SIMR_2019/mkref_core_bio_gft/L34727/L34727_S1_L002_R2_001.fastq.gz", false), ("I1", "/home/ntran2/bgmp/SIMR_2019/mkref_core_bio_gft/L34727/L34727_S1_L002_I1_001.fastq.gz", false)]
@@ -403,39 +407,140 @@ caused by: corrupt gzip stream does not have a matching checksum
 ------------
 If you believe this is a bug in chunk_reads, please report a bug to support@10xgenomics.com.
 
-running chunk reads: [['chunk_reads', '--reads-per-fastq', '5000000', '/home/ntran2/bgmp/SIMR_2019/mkref_core_bio_gft/homeo/SC_RNA_COUNTER_CS/SC_RNA_COUNTER/_BASIC_SC_RNA_COUNTER/CHUNK_READS/fork0/chnk1-u7ca7a31ba9/files/', 'fastq_chunk', '--martian-args', 'chunk_args.json', '--compress', 'lz4']]
-```
+running chunk reads: [['chunk_reads', '--reads-per-fastq', '5000000', '/home/ntran2/bgmp/SIMR_2019/mkref_core_bio_gft/homeo/SC_RNA_COUNTER_CS/SC_RNA_COUNTER/_BASIC_SC_RNA_COUNTER/CHUNK_READS/fork0/chnk1-u7ca7a31ba9/files/', 'fastq_chunk', '--martian-args', 'chunk_args.json', '--compress', 'lz4']]```
 
 Conclusion:
-orrupt or incomplete FASTQ files are a common cause for pipeline failure in this  cellranger count stage.
+corrupt or incomplete FASTQ files are a common cause for pipeline failure in this  cellranger count stage.
 
 Corrupt or incomplete FASTQ files typically result from incomplete transfers. To verify that files are identical between source and destination, please use file checksums such as md5sum
 
 Fastq L34727_S1_L002_I1_001.fastq.gz does not match L34727_S1_L002_R1_001.fastq.gz and L34727_S1_L002_R2_001.fastq.gz
 
+Sample L34727 outputted the same error message
+
+runtime ~ 2 mins before erroring out
+
 use ```md5sum``` for linux on talapas, use ```md5``` on Mac OS
 
 On talapas:
-```
-[ntran2@talapas-ln1 L34727]$ md5sum  L34727_S1_L00*
+
+```[ntran2@talapas-ln1 L34727]$ md5sum  L34727_S1_L00*
 95082022948de7d34fa6c9a83944ac96  L34727_S1_L001_I1_001.fastq.gz
 c46fc567761a314ed1d48433a695ff35  L34727_S1_L001_R1_001.fastq.gz
 17a74db49a6870cb408fae734411b141  L34727_S1_L001_R2_001.fastq.gz
 38ff6d902efe0de20a0c026f5a982980  L34727_S1_L002_I1_001.fastq.gz
 44eaa0eb531740ce221db30b5f57ec0d  L34727_S1_L002_R1_001.fastq.gz
-7b32c844eb5663947c31a4a6149755f4  L34727_S1_L002_R2_001.fastq.gz
-```
+7b32c844eb5663947c31a4a6149755f4  L34727_S1_L002_R2_001.fastq.gz```
 
 On local, MacOS:
 
-```
-(base) Giois-MacBook-Pro:L34727 GioiTran$ cat output.txt 
+```(base) Giois-MacBook-Pro:L34727 GioiTran$ cat output.txt 
 95082022948de7d34fa6c9a83944ac96 L34727_S1_L001_I1_001.fastq.gz
 c46fc567761a314ed1d48433a695ff35 L34727_S1_L001_R1_001.fastq.gz
 17a74db49a6870cb408fae734411b141 L34727_S1_L001_R2_001.fastq.gz
 38ff6d902efe0de20a0c026f5a982980 L34727_S1_L002_I1_001.fastq.gz
 44eaa0eb531740ce221db30b5f57ec0d L34727_S1_L002_R1_001.fastq.gz
-7b32c844eb5663947c31a4a6149755f4 L34727_S1_L002_R2_001.fastq.gz
+7b32c844eb5663947c31a4a6149755f4 L34727_S1_L002_R2_001.fastq.gz```
+
+checksum bytes scp'ed from MacOS --> Talapas HPC is the same
+
+On Stower's portal, Maple server:
+
+```nt2473@maple ~/SIMR_Piostrowski/cellranger/L34727$ md5sum  L34727_S1_L00*
+95082022948de7d34fa6c9a83944ac96  L34727_S1_L001_I1_001.fastq.gz
+c46fc567761a314ed1d48433a695ff35  L34727_S1_L001_R1_001.fastq.gz
+08ca396c8e2b42c95466e8b132915ac5  L34727_S1_L001_R2_001.fastq.gz
+38ff6d902efe0de20a0c026f5a982980  L34727_S1_L002_I1_001.fastq.gz
+44eaa0eb531740ce221db30b5f57ec0d  L34727_S1_L002_R1_001.fastq.gz
+0d72b7a6e4f646ff3d51ee8c2ec20ce4  L34727_S1_L002_R2_001.fastq.gz```
+
+However, checksum bytes from Maple server --> local MacOS is different
+```08ca396c8e2b42c95466e8b132915ac5  L34727_S1_L001_R2_001.fastq.gz``` from Stower's portal is different from ```17a74db49a6870cb408fae734411b141  L34727_S1_L001_R2_001.fastq.gz``` once downloaded onto local computer
+Concludes that downloading files from Stower's portal is not as stable as logging in with ssh external access
+
+#### Week of April 27th
+
+Sample L29314 pulled from ```/n/analysis/Piotrowski/heb/MOLNG-2047/HLC2NBCXY/L29314```
+
+Sample L34728 pulled from ```/n/analysis/Piotrowski/sb2191/MOLNG-2410/HK3H3BCX2/HK3H3BCX2/L34728```
+
+Sample L34727 pulled from ```/n/analysis/Piotrowski/sb2191/MOLNG-2410/HK3H3BCX2/HK3H3BCX2/L34727```
+
+ On Stower's Maple Server:
+ 
+```cd SIMR_Piostrowski/cellranger/
+cp -r /n/analysis/Piotrowski/sb2191/MOLNG-2410/HK3H3BCX2/HK3H3BCX2/L34727 .
+cp -r /n/data1/genomes/indexes/danRer11/annotation/Ens_98/10x/cellranger-2.1.0/ .
+cellranger count --id=run_count_L34727 --transcriptome=cellranger-2.1.0/ --fastqs=L34727/ --sample=L34727
+cp -r /n/analysis/Piotrowski/sb2191/MOLNG-2410/HK3H3BCX2/HK3H3BCX2/L34728 .
+cellranger count --id=run_count_L34728 --transcriptome=cellranger-2.1.0/ --fastqs=L34728/ --sample=L34728
+cp -r /n/analysis/Piotrowski/heb/MOLNG-2047/HLC2NBCXY/L29314 .
+cellranger count --id=run_count_L29314 --transcriptome=cellranger-2.1.0/ --fastqs=L29314/ --sample=L29314```
+
+Successful run of all three samples. Example of final log output:
+
+```Outputs:
+- Run summary HTML:                         /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/web_summary.html
+- Run summary CSV:                          /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/metrics_summary.csv
+- BAM:                                      /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/possorted_genome_bam.bam
+- BAM index:                                /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/possorted_genome_bam.bam.bai
+- Filtered feature-barcode matrices MEX:    /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/filtered_feature_bc_matrix
+- Filtered feature-barcode matrices HDF5:   /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/filtered_feature_bc_matrix.h5
+- Unfiltered feature-barcode matrices MEX:  /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/raw_feature_bc_matrix
+- Unfiltered feature-barcode matrices HDF5: /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/raw_feature_bc_matrix.h5
+- Secondary analysis output CSV:            /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/analysis
+- Per-molecule read information:            /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/molecule_info.h5
+- CRISPR-specific analysis:                 null
+- Loupe Cell Browser file:                  /home/nt2473/SIMR_Piostrowski/cellranger/run_count_L29314/outs/cloupe.cloupe
+
+2020-04-28 20:19:25 [perform] Serializing pipestance performance data.
+Waiting 6 seconds for UI to do final refresh.
+Pipestance completed successfully!```
+
+ 
+ 
+ * try vars.to.regress & change subsetting parameterson homeo 10X to see if a more robust DV cluster is present
+ 
+ **new subset parameter:**
+ 
+ ```homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA < 3000 & percent.mt < 10 & nCount_RNA <20000)```
+ 
+ 
+An object of class Seurat 
+25622 features across 16741 samples within 1 assay 
+Active assay: RNA (25622 features)
+
+Roughly ~600 more cells with new assay compared to the original
+
+**regressed nCount_RNA:**
+
+```> homeo.isl1_sib_10X <- ScaleData(homeo.isl1_sib_10X, features = NULL, vars.to.regress = "nCount_RNA", verbose = TRUE)
+Regressing out nCount_RNA
+Centering and scaling data matrix```
+
+![Adj homeo 10X data w/ vars.toregress=nCount, new subset, PC10](/Volumes/easystore/SIMR_2019/pio-lab/scripts/adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC10.png)
+
+![Adj homeo 10X data w/ vars.toregress=nCount, new subset, PC15](/Volumes/easystore/SIMR_2019/pio-lab/scripts/adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC15.png)
+
+![Adj homeo 10X data w/ vars.toregress=nCount, new subset, P20](/Volumes/easystore/SIMR_2019/pio-lab/scripts/adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC20.png)
+
+![Adj homeo 10X data w/ vars.toregress=nCount, new subset, PC25](/Volumes/easystore/SIMR_2019/pio-lab/scripts/adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC25.png)
+
+Conclusion: despite reparameterizing to regress the UMI variation during the scaling step, we see that the DV poles are still weakly defined at each incremental PC (10-25). 
+
+##### Assessing UMI Abundance
+![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/UMIAbundance.png)
+
+![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/hist-10X.png)
+![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/hist-smartseq2.png)
+
+Logging on to stowers portal using ssh
+
+```{bash, eval=FALSE}
+ssh nt2473@access.stowers.org
+ssh nt2473@maple
+nt2473@maple ~$ cd /n
 ```
 
-It matches
+
+ 

@@ -4,14 +4,17 @@ library(dplyr)
 library(ggplot2)
 library(cowplot)
 library(ggrepel)
+options(future.globals.maxSize = 16000 * 1024^2)
+
 
 if (TRUE) {
-  setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
+  #setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
+  
+  setwd("/home/ntran2/bgmp/pio-lab/scripts")
   
   script_name <- "homeo_samples_integ"
   
-  figurePath <- function(filename, format){paste0("/Volumes/easystore/SIMR_2019",
-                                                  "/pio-lab/scripts/", script_name, "_figures/", filename)}
+  figurePath <- function(filename, format){paste0(script_name, "_figures/", filename)}
 
 }
 
@@ -79,6 +82,8 @@ obj_list$L29314[["RNA"]]@data
 # =========================================================== Add the isl1 homeo data
 adj_homeo_isl1_10X <- readRDS("../data/adj_homeo.isl1_sib_10X.RDS")
 
+adj_homeo_isl1_10X@meta.data$data.set <- "homeo-10X-isl1"
+
 sample.ls <- c("isl1_10X","L29314", "L34727", "L34728")
 
 obj_list <- c(adj_homeo_isl1_10X,obj_list)
@@ -124,27 +129,62 @@ if (SC_transform) {
 obj_integrated@meta.data$data.set <- factor(obj_integrated@meta.data$data.set, ordered = TRUE)
 
 # =========================================================== UMAP/Clustering
+dim_list <- c(10,15,20,25,30)
+
+common_features <- scan(paste0("../data/gene-lists/common_neuromast_features.txt"), what = "character")
+
 if (!SC_transform) {
   obj_integrated <- ScaleData(obj_integrated, verbose = TRUE, vars.to.regress = "nCount_RNA")
   obj_integrated <- RunPCA(obj_integrated, npcs = 100, verbose = TRUE, features = NULL)
-  obj_integrated <- FindNeighbors(obj_integrated, dims = 1:15)
-  obj_integrated <- FindClusters(obj_integrated, resolution = 1.2)
-  obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:15)
+}
+for (pc in dim_list){
+  obj_integrated <- FindNeighbors(obj_integrated, dims = 1:pc, verbose = TRUE)
+  obj_integrated <- FindClusters(obj_integrated, resolution = 1.2, verbose = TRUE)
+  obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:pc, verbose = TRUE)
+  png(figurePath(paste0("umap.by.dataset.PC",pc,".png"))
+      ,width = 11, height = 9, units = "in", res = 300)
+  print(DimPlot(obj_integrated, group.by  = "data.set") + DarkTheme())
+  dev.off()
+  png(figurePath(paste0("umap.unlabelled.PC",pc,".png"))
+      ,width = 11, height = 9, units = "in", res = 300)
+  print(DimPlot(obj_integrated))
+  dev.off()
+  integrated_featplt <- FeaturePlot(obj_integrated, common_features,
+                                    reduction = "umap", pt.size = 0.25, combine = FALSE, label = TRUE)
+  for (i in 1:length(integrated_featplt)) {
+    integrated_featplt[[i]] <- integrated_featplt[[i]] + NoLegend() + NoAxes()
+  }
+  png(figurePath(paste0("common_features.PC",pc,".png")), width = 40,
+      height = 80, units = "in", res = 200)
+  print(cowplot::plot_grid(plotlist = integrated_featplt, ncol = 4))
+  dev.off()
   
 }
 
-saveRDS(object = obj_integrated, file = "../data/homeo_samples_integ.RDS")
+# =========================================================== PC 25 Annotating
+obj_integrated <- FindNeighbors(obj_integrated, dims = 1:25, verbose = TRUE)
+obj_integrated <- FindClusters(obj_integrated, resolution = 1.2, verbose = TRUE)
+obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:25, verbose = TRUE)
+DimPlot(obj_integrated)
 
-readRDS("../data/homeo_samples_integ.RDS")
-# =========================================================== Sample L29314
+meta_common_features <- read.table(file = "../data/gene-lists/meta_common_features.tsv", sep = "", header = T)
 
+plan("multiprocess")
+all.markers.integ <- FindAllMarkers(obj_integrated, only.pos = FALSE, min.pct = 0.01, logfc.threshold = 0.01, return.thresh = 0.001, verbose = TRUE)
 
-# =========================================================== Sample L34727
+meta <- obj_integrated@meta.data
+colnames(meta)
+cells <- list("mature-HCs" = c(2), "early-HCs" = c(10,17),  "HC-prog" = 16,
+              "central-cells" = c(1, 11,4,6), "DV/AP-cells" = c(7,9),
+              "amplfying support" = 14, "mantle-cells" = c(0,3), "col1a1b-pos" = c(12),
+              "c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(15,22,5,2), "apoa1b-pos" = 23, "mfap4-pos" = 21, "krt91-pos" = 24)
+meta$cell.type.ident <- factor(rep("", nrow(meta)),
+                               levels = names(cells), ordered = TRUE)
+for (i in 1:length(cells)) {
+  meta$cell.type.ident[meta$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
+}
+homeo.isl1_sib_10X@meta.data <- meta
+Idents(homeo.isl1_sib_10X) <- homeo.isl1_sib_10X@meta.data$cell.type.ident
 
-
-# =========================================================== Sample L34728
-
-
-
-
+umap.labeled <- DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE, pt.size= 0.4) + NoLegend()
 

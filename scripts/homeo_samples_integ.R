@@ -140,7 +140,7 @@ if (!SC_transform) {
 }
 for (pc in dim_list){
   obj_integrated <- FindNeighbors(obj_integrated, dims = 1:pc, verbose = TRUE)
-  obj_integrated <- FindClusters(obj_integrated, resolution = 1.2, verbose = TRUE)
+  obj_integrated <- FindClusters(obj_integrated, resolution = 1.0, verbose = TRUE)
   obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:pc, verbose = TRUE)
   png(figurePath(paste0("umap.by.dataset.PC",pc,".png"))
       ,width = 11, height = 9, units = "in", res = 300)
@@ -162,16 +162,16 @@ for (pc in dim_list){
   
 }
 
+# =========================================================== PC 25 Annotating
+obj_integrated <- FindNeighbors(obj_integrated, dims = 1:25, verbose = TRUE)
+obj_integrated <- FindClusters(obj_integrated, resolution = 1.0, verbose = TRUE)
+obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:25, verbose = TRUE)
+DimPlot(obj_integrated, group.by = "data.set")
+DimPlot(obj_integrated)
+
 saveRDS(object = obj_integrated, file = "../data/homeo_samples_integ.RDS")
 
 readRDS("../data/homeo_samples_integ.RDS")
-# =========================================================== PC 25 Annotating
-obj_integrated <- FindNeighbors(obj_integrated, dims = 1:25, verbose = TRUE)
-obj_integrated <- FindClusters(obj_integrated, resolution = 1.2, verbose = TRUE)
-obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:25, verbose = TRUE)
-DimPlot(obj_integrated, group.by = "data.set")
-
-
 
 meta_common_features <- read.table(file = "../data/gene-lists/meta_common_features.tsv", sep = "", header = T)
 
@@ -180,17 +180,22 @@ all.markers.integ <- FindAllMarkers(obj_integrated, only.pos = FALSE, min.pct = 
 
 meta <- obj_integrated@meta.data
 colnames(meta)
-cells <- list("mature-HCs" = c(2,21), "early-HCs" = c(19,20),  "HC-prog" = 17,
-              "central-cells" = c(0,1,5,8,22), "DV/AP-cells" = c(7,9),
-              "amplfying support" = 14, "mantle-cells" = c(4,6), "col1a1b-pos" = c(12),
-              "c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(3,7,11,13), "apoa1b-pos" = 23, "mfap4-pos" = 21, "krt91-pos" = 24)
+cells <- list("mature-HCs" = 0, "early-HCs" = 14,  "HC-prog" = 16,
+              "central-cells" = c(1,2,3,9,19), "D/V-cells" = c(10), "A/P-cells" = c(8,18),
+              "amplfying support" = c(11,17), "mantle-cells" = c(5,6), "interneuromast" = c(4,7,13,15))
+              #,"col1a1b-pos" = c(12),
+              #"c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(3,7,11,13), "apoa1b-pos" = 23, "mfap4-pos" = 21, "krt91-pos" = 24)
 meta$cell.type.ident <- factor(rep("", nrow(meta)),
                                levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {
   meta$cell.type.ident[meta$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
 }
 obj_integrated@meta.data <- meta
-Idents(homeo.isl1_sib_10X) <- homeo.isl1_sib_10X@meta.data$cell.type.ident
+Idents(obj_integrated) <- obj_integrated@meta.data$cell.type.ident
 
-umap.labeled <- DimPlot(homeo.isl1_sib_10X, reduction = "umap", label = TRUE, pt.size= 0.4) + NoLegend()
+umap.labeled <- DimPlot(obj_integrated, reduction = "umap", label = TRUE, pt.size= 0.4) + NoLegend()
 
+png(figurePath("annotated.clusters.png"), width = 11,
+    height = 9, units = "in", res = 200)
+print(umap.labeled)
+dev.off()

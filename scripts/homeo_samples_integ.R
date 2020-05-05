@@ -4,7 +4,7 @@ library(dplyr)
 library(ggplot2)
 library(cowplot)
 library(ggrepel)
-options(future.globals.maxSize = 16000 * 1024^2)
+options(future.globals.maxSize = 8000 * 1024^2)
 
 
 if (TRUE) {
@@ -171,20 +171,35 @@ DimPlot(obj_integrated)
 
 saveRDS(object = obj_integrated, file = "../data/homeo_samples_integ.RDS")
 
-readRDS("../data/homeo_samples_integ.RDS")
+obj_integrated <- readRDS("../data/homeo_samples_integ.RDS")
 
 meta_common_features <- read.table(file = "../data/gene-lists/meta_common_features.tsv", sep = "", header = T)
 
-plan("multiprocess")
-all.markers.integ <- FindAllMarkers(obj_integrated, only.pos = FALSE, min.pct = 0.01, logfc.threshold = 0.01, return.thresh = 0.001, verbose = TRUE)
+#plan("multiprocess")
+#all.markers.integ <- FindAllMarkers(obj_integrated, only.pos = FALSE, min.pct = 0.1, logfc.threshold = 0.01, return.thresh = 0.001, verbose = TRUE)
+
+gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
+
+# =========================================================== Annotate -pos clusters
+pos_list <- c(12,20,21,22,23,24,25)
+
+for (x in pos_list){
+  print(paste0("finding markers for cluster: ", x))
+  plan("multiprocess")
+  assign(paste0("cluster_",x), FindMarkers(obj_integrated, ident.1 = x, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE))
+}
+
+for (x in pos_list){
+  assign(paste0("test_cluster_",x), paste0("cluster_",x))
+}
 
 meta <- obj_integrated@meta.data
 colnames(meta)
 cells <- list("mature-HCs" = 0, "early-HCs" = 14,  "HC-prog" = 16,
               "central-cells" = c(1,2,3,9,19), "D/V-cells" = c(10), "A/P-cells" = c(8,18),
-              "amplfying support" = c(11,17), "mantle-cells" = c(5,6), "interneuromast" = c(4,7,13,15))
-              #,"col1a1b-pos" = c(12),
-              #"c1qtnf5-pos" = 20, "clec14a-pos" = 19, "interneuromast" = c(3,7,11,13), "apoa1b-pos" = 23, "mfap4-pos" = 21, "krt91-pos" = 24)
+              "amplfying support" = c(11,17), "mantle-cells" = c(5,6), "interneuromast" = c(4,7,13,15),"col1a1b-pos" = 12,
+              "clec14a-pos" = 21, "mfap4-pos" = 23, "c1qtnf5" = 24)
+              # " "apoa1b-pos" = 23, , "krt91-pos" = 24)
 meta$cell.type.ident <- factor(rep("", nrow(meta)),
                                levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {

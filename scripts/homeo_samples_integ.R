@@ -181,25 +181,37 @@ meta_common_features <- read.table(file = "../data/gene-lists/meta_common_featur
 gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
 
 # =========================================================== Annotate -pos clusters
+#desired unlabelled clusters passed through 
 pos_list <- c(12,20,21,22,23,24,25)
+pos_clusters <- vector(mode = "list", length = length(pos_list))
 
 for (x in pos_list){
   print(paste0("finding markers for cluster: ", x))
   plan("multiprocess")
   assign(paste0("cluster_",x), FindMarkers(obj_integrated, ident.1 = x, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE))
-}
+  
+  }
 
-for (x in pos_list){
-  assign(paste0("test_cluster_",x), paste0("cluster_",x))
-}
+
+for (x in 1:length(pos_list)){
+  print(paste0("finding markers for cluster: ", pos_list[x]))
+  pos_clusters[[x]] <- FindMarkers(obj_integrated, ident.1 = pos_list[x], only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE)
+  print(pos_clusters[[x]])
+  pos_clusters[[x]]["Gene.name.uniq"] <- row.names(pos_clusters[[x]])
+  pos_clusters[[x]] <- merge(pos_clusters[[x]], gene_table, by = "Gene.name.uniq")
+  }
+
+names(pos_clusters) <- paste("cluster_", pos_list)
+
+pos_clusters$`cluster_ 12`
+
 
 meta <- obj_integrated@meta.data
 colnames(meta)
 cells <- list("mature-HCs" = 0, "early-HCs" = 14,  "HC-prog" = 16,
               "central-cells" = c(1,2,3,9,19), "D/V-cells" = c(10), "A/P-cells" = c(8,18),
               "amplfying support" = c(11,17), "mantle-cells" = c(5,6), "interneuromast" = c(4,7,13,15),"col1a1b-pos" = 12,
-              "clec14a-pos" = 21, "mfap4-pos" = 23, "c1qtnf5" = 24)
-              # " "apoa1b-pos" = 23, , "krt91-pos" = 24)
+              "clec14a-pos" = 21, "mfap4-pos" = 23, "c1qtnf5" = 24, "apoa1b-pos" = 25, "krt91-pos" = 20, "hbbe1-pos" = 22)
 meta$cell.type.ident <- factor(rep("", nrow(meta)),
                                levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {
@@ -214,3 +226,6 @@ png(figurePath("annotated.clusters.png"), width = 11,
     height = 9, units = "in", res = 200)
 print(umap.labeled)
 dev.off()
+
+saveRDS(object = obj_integrated, file = "../data/homeo_samples_integ.RDS")
+

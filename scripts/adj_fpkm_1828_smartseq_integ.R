@@ -185,6 +185,10 @@ for (pc in dim_list){
       ,width = 11, height = 9, units = "in", res = 300)
   print(DimPlot(obj_integrated))
   dev.off()
+  png(figurePath(paste0("umap.by.treatment.PC", pc,".png"))
+      ,width = 11, height = 9, units = "in", res = 300)
+  print(DimPlot(obj_integrated, group.by = "treatment") + DarkTheme())
+  dev.off()
   integrated_featplt <- FeaturePlot(obj_integrated, common_features,
                                     reduction = "umap", pt.size = 0.25, combine = FALSE, label = TRUE)
   for (i in 1:length(integrated_featplt)) {
@@ -194,5 +198,68 @@ for (pc in dim_list){
       height = 80, units = "in", res = 200)
   print(cowplot::plot_grid(plotlist = integrated_featplt, ncol = 4))
   dev.off()
-  
 }
+
+# =========================================================== PC 25 Annotating
+obj_integrated <- FindNeighbors(obj_integrated, dims = 1:25, verbose = TRUE)
+obj_integrated <- FindClusters(obj_integrated, resolution = 1.0, verbose = TRUE)
+obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:25, verbose = TRUE)
+DimPlot(obj_integrated, group.by = "data.set")
+print(DimPlot(obj_integrated, label = TRUE))
+
+saveRDS(object = obj_integrated, file = paste0("../data/", script_name,".RDS"))
+
+meta_common_features <- read.table(file = "../data/gene-lists/meta_common_features.tsv", sep = "", header = T)
+
+gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
+
+# =========================================================== Annotate -pos clusters
+#desired unlabelled clusters passed through 
+pos_list <- c(13,20,21,22,23,24,25)
+pos_clusters <- vector(mode = "list", length = length(pos_list))
+
+for (x in 1:length(pos_list)){
+  print(paste0("finding markers for cluster: ", pos_list[x]))
+  pos_clusters[[x]] <- FindMarkers(obj_integrated, ident.1 = pos_list[x], only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE)
+  print(pos_clusters[[x]])
+  pos_clusters[[x]]["Gene.name.uniq"] <- row.names(pos_clusters[[x]])
+  pos_clusters[[x]] <- merge(pos_clusters[[x]], gene_table, by = "Gene.name.uniq")
+}
+
+names(pos_clusters) <- paste("cluster_", pos_list)
+
+# =========================================================== Annotate neuromast clusters
+meta <- obj_integrated@meta.data
+
+cluster.ident <- strsplit(unique(na.omit(meta$cell.type.ident)), split = "[][']|,\\s*")
+
+meta %>% filter(cell.type.ident == cluster.ident[[1]]) %>% count(seurat_clusters)
+
+
+
+
+
+
+
+
+
+
+colnames(meta)
+cells <- list("mature-HCs" = 0, "early-HCs" = 14,  "HC-prog" = 16,
+              "central-cells" = c(1,2,3,9,19), "D/V-cells" = c(10), "A/P-cells" = c(8,18),
+              "amplfying support" = c(11,17), "mantle-cells" = c(5,6), "interneuromast" = c(4,7,13,15),"col1a1b-pos" = 12,
+              "clec14a-pos" = 21, "mfap4-pos" = 23, "c1qtnf5" = 24, "apoa1b-pos" = 25, "krt91-pos" = 20, "hbbe1-pos" = 22)
+meta$cell.type.ident <- factor(rep("", nrow(meta)),
+                               levels = names(cells), ordered = TRUE)
+for (i in 1:length(cells)) {
+  meta$cell.type.ident[meta$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
+}
+obj_integrated@meta.data <- meta
+Idents(obj_integrated) <- obj_integrated@meta.data$cell.type.ident
+
+umap.labeled <- DimPlot(obj_integrated, reduction = "umap", label = TRUE, pt.size= 0.4) + NoLegend()
+
+png(figurePath("annotated.clusters.png"), width = 11,
+    height = 9, units = "in", res = 200)
+print(umap.labeled)
+dev.off()

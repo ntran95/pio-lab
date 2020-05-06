@@ -5,6 +5,7 @@ library(ggplot2)
 library(cowplot)
 library(ggrepel)
 options(future.globals.maxSize = 8000 * 1024^2)
+library(RColorBrewer)
 
 
 if (TRUE) {
@@ -128,6 +129,24 @@ if (SC_transform) {
 
 obj_integrated@meta.data$data.set <- factor(obj_integrated@meta.data$data.set, ordered = TRUE)
 
+
+# =========================================================== Adjust object integrated metadata
+
+obj_integrated@meta.data$data.set <- factor(obj_integrated@meta.data$data.set, ordered = TRUE)
+
+#rename homeo samples L##### to LIMS order number
+meta_obj_integ <- obj_integrated@meta.data
+
+data.set <- as.vector(obj_integrated@meta.data$data.set)
+
+meta_obj_integ <- meta_obj_integ%>% mutate(data.set =case_when(str_detect(data.set, "homeo-L29314") ~ "homeo-2047", 
+                                                               str_detect(data.set, "homeo-L34727") ~ "homeo-2410-7",
+                                                               str_detect(data.set, "homeo-L34728") ~ "homeo-2410-8",
+                                                               TRUE ~ as.vector(obj_integrated@meta.data$data.set)))
+
+obj_integrated@meta.data$data.set <- meta_obj_integ$data.set
+
+
 # =========================================================== UMAP/Clustering
 dim_list <- c(10,15,20,25,30)
 
@@ -144,7 +163,7 @@ for (pc in dim_list){
   obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:pc, verbose = TRUE)
   png(figurePath(paste0("umap.by.dataset.PC",pc,".png"))
       ,width = 11, height = 9, units = "in", res = 300)
-  print(DimPlot(obj_integrated, group.by  = "data.set") + DarkTheme())
+  print(DimPlot(obj_integrated, group.by = "data.set", cols = brewer.pal(n = 4, name = "RdBu")) + DarkTheme()) 
   dev.off()
   png(figurePath(paste0("umap.unlabelled.PC",pc,".png"))
       ,width = 11, height = 9, units = "in", res = 300)
@@ -185,12 +204,12 @@ gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t
 pos_list <- c(12,20,21,22,23,24,25)
 pos_clusters <- vector(mode = "list", length = length(pos_list))
 
-for (x in pos_list){
-  print(paste0("finding markers for cluster: ", x))
-  plan("multiprocess")
-  assign(paste0("cluster_",x), FindMarkers(obj_integrated, ident.1 = x, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE))
-  
-  }
+# for (x in pos_list){
+#   print(paste0("finding markers for cluster: ", x))
+#   plan("multiprocess")
+#   assign(paste0("cluster_",x), FindMarkers(obj_integrated, ident.1 = x, only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE))
+#   
+#   }
 
 
 for (x in 1:length(pos_list)){
@@ -202,8 +221,6 @@ for (x in 1:length(pos_list)){
   }
 
 names(pos_clusters) <- paste("cluster_", pos_list)
-
-pos_clusters$`cluster_ 12`
 
 
 meta <- obj_integrated@meta.data

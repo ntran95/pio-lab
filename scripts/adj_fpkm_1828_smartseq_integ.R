@@ -6,6 +6,7 @@ library(cowplot)
 library(ggrepel)
 library(stringr)
 options(future.globals.maxSize = 8000 * 1024^2)
+library(RColorBrewer)
 
 
 if (TRUE) {
@@ -98,9 +99,12 @@ homeo_samples_integ <- readRDS("../data/homeo_samples_integ.RDS")
 #search for NAs
 grep("TRUE",is.na(colnames(homeo_samples_integ)))
 
+
+
 # =========================================================== Seurat Object List ================================
 #split homeo data by samples (c("isl1_10X","L29314", "L34727", "L34728"))
 split_homeo_samples_integ <- SplitObject(homeo_samples_integ, split.by = "data.set")
+
 #split smartseq by treatment (c(1hr-smrtseq, homeo-smrtseq))
 split_fpkm_smartseq <- SplitObject(fpkm_matrix_1828_smartseq2, split.by = "data.set")
 
@@ -108,9 +112,6 @@ seurat_obj_list <- c(split_homeo_samples_integ, split_fpkm_smartseq)
 
 all_shared_genes <- lapply(seurat_obj_list, row.names) %>% Reduce(intersect, .) 
 
-length(all_shared_genes)
-
-length(seurat_obj_list)
 
 for (i in 1:length(seurat_obj_list)){
   #get current assay
@@ -159,7 +160,21 @@ if (SC_transform) {
   
 }
 
+# =========================================================== Adjust object integrated metadata
+
 obj_integrated@meta.data$data.set <- factor(obj_integrated@meta.data$data.set, ordered = TRUE)
+
+#rename homeo samples L##### to LIMS order number
+meta_obj_integ <- obj_integrated@meta.data
+
+data.set <- as.vector(obj_integrated@meta.data$data.set)
+
+meta_obj_integ <- meta_obj_integ%>% mutate(data.set =case_when(str_detect(data.set, "homeo-L29314") ~ "homeo-2047", 
+                                                               str_detect(data.set, "homeo-L34727") ~ "homeo-2410-7",
+                                                               str_detect(data.set, "homeo-L34728") ~ "homeo-2410-8",
+                                                               TRUE ~ as.vector(obj_integrated@meta.data$data.set)))
+
+obj_integrated@meta.data$data.set <- meta_obj_integ$data.set
 
 # =========================================================== UMAP/Clustering
 
@@ -179,7 +194,7 @@ for (pc in dim_list){
   obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:pc, verbose = TRUE)
   png(figurePath(paste0("umap.by.dataset.PC",pc,".png"))
       ,width = 11, height = 9, units = "in", res = 300)
-  print(DimPlot(obj_integrated, group.by  = "data.set") + DarkTheme())
+  print(DimPlot(obj_integrated, group.by = "data.set", cols = brewer.pal(n = 6, name = "RdBu")) + DarkTheme()) 
   dev.off()
   png(figurePath(paste0("umap.unlabelled.PC",pc,".png"))
       ,width = 11, height = 9, units = "in", res = 300)
@@ -245,13 +260,6 @@ for (i in 1:length(cluster.ident)){
 
 names(cluster.ident.list) <- cluster.ident
 
-cll
-
-
-
-
-
-
 
 colnames(meta)
 cells <- list("mature-HCs" = c(6,12), "early-HCs" = c(17,19),  "HC-prog" = 16,
@@ -272,3 +280,6 @@ png(figurePath("annotated.clusters.png"), width = 11,
     height = 9, units = "in", res = 200)
 print(umap.labeled)
 dev.off()
+
+
+saveRDS(object = obj_integrated, file = paste0("../data/", script_name,".RDS"))

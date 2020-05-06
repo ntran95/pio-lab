@@ -9,7 +9,7 @@ output:
   pdf_document': default
 ---
 
-```{r,workplace}
+```{r,workplace, message=FALSE, warning=FALSE, results='hide', echo=FALSE}
 knitr::opts_chunk$set(message = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
 library(Seurat)
@@ -25,21 +25,25 @@ library(ggrepel)
 
 library(knitr)
 library(kableExtra)
-load("../data/pre_integrated_SeurObj.RData")
+#load("../data/pre_integrated_SeurObj.RData")
 
 setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
 ```
 
-#### Objective:
+######## Objective:
 
 * Clustering and annotation of 10X homeo isl1 sibling data
 
 * Integration with smartseq2 data, with 2 replicates, and 2 treatments: homeo and 1hr
 
 
-## Week of April 6th
+# Results {.tabset .tabset-pills}
 
-#### Create Seurat Object for 10X homeo data, preprocesssing, QC filtering
+## Week of April 6th {.tabset
+}
+We will discuss results here
+
+######## Create Seurat Object for 10X homeo data, preprocesssing, QC filtering
 
 ```nFeature_RNA``` is the number of genes detected in each cell. 
 
@@ -49,11 +53,11 @@ Low ```nFeature_RNA``` for a cell indicates that it may be dead/dying or an empt
 
 High ```nCount_RNA``` and/or ```nFeature_RNA``` indicates that the "cell" may in fact be a doublet (or multiplet). 
 
-```{r,fig.height=25}
+```{r,fig.height=25, eval=FALSE}
 nFeature.vln.homeo.isl1.sib.10X + nCount.vln.homeo.isl1.sib.10X + pct.mito.vln.homeo.isl1.sib.10X
 ```
 
-```{r, fig.width = 10}
+```{r, fig.width = 10,eval=FALSE}
 featurescatter.nCountXpercent.mt.homeo.isl1.sib.10X + featurescatter.nCountXnFeature.homeo.isl1.sib.10X
 ```
 
@@ -66,13 +70,13 @@ Noticable increase in cells/samples from 2979 to ~16000 using an alternative sub
 ```homeo.isl1_sib_10X <- subset(homeo.isl1_sib_10X, subset = nFeature_RNA > 200 & nFeature_RNA < 3000 & percent.mt < 10)```
 will give 2979 cells, which is way to conservative, marker genes will not be expressed with this subset
 
-```{r}
+```{r,eval=FALSE}
 homeo.isl1_sib_10X
 ```
 
 **Find Variable Features**
 
-```{r}
+```{r,eval=FALSE}
 VariableFeature.labedlplot2.homeo.isl1_sib_10X
 ```
 
@@ -85,7 +89,7 @@ Error in getGlobalsAndPackages(expr, envir = envir, globals = globals) :
   
 ## Choosing PC
 
-```{r,scree}
+```{r,scree,eval=FALSE}
 ElbowPlot(homeo.isl1_sib_10X, ndims = 50)
 
 ElbowPlot(homeo.isl1_sib_10X, ndims = 30)
@@ -96,7 +100,7 @@ ElbowPlot(homeo.isl1_sib_10X, ndims = 20)
 
 Scree plot shows that variance/eigenvalues in data seem to level off between 15-20 PCs. We'll get the most information within the first ~15 PCs. Use jackstraw to confirm statistical power.
 
-```{r}
+```{r,eval=FALSE}
 JackStrawPlot.PC20.homeo.isl1_sib_10X
 ```
 
@@ -104,19 +108,19 @@ Showing less statistical significance past >18 PC. Will set PC to 15
 
 PC 15 with resolution 1.2, 14 clusters: gave pretty neat cluster, some single cells outside their prespective groupings however no striking outliers
 
-```{r}
+```{r,eval=FALSE}
 umap.unlabeled
 ```
 
 24 Clusters generated
 
-#### Annotation
+######## Annotation
 
 List of marker genes was taken from Lush (2019) publications
 
 Functions created to help annotate and visualize marker genes:
 
-####FeaturePlotToPNG####
+########FeaturePlotToPNG########
 Given list of marker genes, will print individual FeaturePlot and directs the plots to the specified directory
 
 ```figure_dir <- "isl1_sib_counts_10X_figures"
@@ -131,7 +135,7 @@ FeaturePlotToPng <- function(marker.list, dir_name) {
     dev.off()}}```
 
 
-####VlnPlotToPNG
+########VlnPlotToPNG
 Given list of marker genes, will print individual Vlnplot and directs the plots to the specified directory
 
 
@@ -151,7 +155,7 @@ VlnPlotToPng <- function(marker.list, dir_name) {
 ```
 
 
-#####Top10GeneCellIdentityFunction#####
+#########Top10GeneCellIdentityFunction#########
 This function will return a adjusted dataframe for the genes with the 10 (or less) highest avg_logFC and its corresponding cluster it will also generate a FeaturePlot and Violin Plot corresponding
 this function may be helpful as most canonical markers have low signal, this will discern what signal is highest to help identify clusters
 
@@ -177,7 +181,7 @@ Use excel sheet for Lush (2019) suppl file 9 for list of hair cells in their you
 
 ![Robust Marker Feature Plots](/Volumes/easystore/SIMR_2019/pio-lab/scripts/isl1_sib_counts_10X_figures/common_features.png)
 
-#### Renamed Cluster Identity
+################ Renamed Cluster Identity
 
 ![Renamed Cluster Umap](/Volumes/easystore/SIMR_2019/pio-lab/scripts/isl1_sib_counts_10X_figures/annotated_umap_clusters.png)
 
@@ -296,13 +300,13 @@ Warning: Could not find spaca4l in the default search locations, found in RNA as
 Resolved by implementing the following:
 ```all_shared_genes <- lapply(seurat_obj_list, row.names) %>% Reduce(intersect, .) ```
 
-#### Week of April 20: Differential Gene Expression
+## Week of April 20: Differential Gene Expression
 
 * Differential Gene Expression of Central Cells: 1hr vs Homeo
 
 **Top 10 Differentially Expressed Genes in Central cells at 1hr Vs. Homeo**
 
-```{r}
+```{r, eval=FALSE}
 kable(head(read.table(file = '../data/central.dge.df.tsv', sep = '\t', header = T),10))
 ```
 
@@ -313,7 +317,7 @@ kable(head(read.table(file = '../data/central.dge.df.tsv', sep = '\t', header = 
 
 ![Central Cells TOP DGE DotPlot](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/central.dge.dotplt.png)
 
-#### Weekly Meeting To-Do List April 22:
+######## Weekly Meeting To-Do List April 22:
 
 * provide metrics on the differences UMI abundance/ features:cell abundance between 10X and smartseq
 
@@ -326,7 +330,7 @@ kable(head(read.table(file = '../data/central.dge.df.tsv', sep = '\t', header = 
 * look at subpopulation of HC
 
 
-#### Cell Ranger
+######## Cell Ranger
 
 three homeo samples are located in the following dir after logging on to Stowers Portal
 
@@ -458,7 +462,7 @@ However, checksum bytes from Maple server --> local MacOS is different
 ```08ca396c8e2b42c95466e8b132915ac5  L34727_S1_L001_R2_001.fastq.gz``` from Stower's portal is different from ```17a74db49a6870cb408fae734411b141  L34727_S1_L001_R2_001.fastq.gz``` once downloaded onto local computer
 Concludes that downloading files from Stower's portal is not as stable as logging in with ssh external access
 
-#### Week of April 27th
+## Week of April 27th
 
 Sample L29314 pulled from ```/n/analysis/Piotrowski/heb/MOLNG-2047/HLC2NBCXY/L29314```
 
@@ -528,13 +532,13 @@ Centering and scaling data matrix```
 
 Conclusion: despite reparameterizing to regress the UMI variation during the scaling step, we see that the DV poles are still weakly defined at each incremental PC (10-25). 
 
-##### Assessing UMI Abundance
+######### Assessing UMI Abundance
 ![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/UMIAbundance.png)
 
 ![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/hist-10X.png)
 ![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/hist-smartseq2.png)
 
-#### Setting up ssh tunnel
+######## Setting up ssh tunnel
 
 ```{bash, eval=FALSE}
 #get into .config file on local machine
@@ -549,6 +553,72 @@ ssh maple
 #12 threads
 
 ```
+
+## Week May 4th - Integration of Homeostatic Samples {.tabset}
+
+#### Clustering based on datasets (PC 15, 20 ,25, 30)
+
+![PC 15](homeo_samples_integ_figures/umap.by.dataset.PC15.png) 
+
+![PC 20](homeo_samples_integ_figures/umap.by.dataset.PC20.png)
+
+![PC 25](homeo_samples_integ_figures/umap.by.dataset.PC25.png)
+
+![PC 30](homeo_samples_integ_figures/umap.by.dataset.PC30.png)
+
+#### Unannotated Umap Clustering (PC 15, 20 ,25, 30)
+
+![PC 15](homeo_samples_integ_figures/umap.unlabelled.PC15.png) 
+
+![PC 20](homeo_samples_integ_figures/umap.unlabelled.PC20.png)
+
+![PC 25](homeo_samples_integ_figures/umap.unlabelled.PC25.png)
+
+![PC 30](homeo_samples_integ_figures/umap.unlabelled.PC30.png)
+
+#### Annotations based on PC 25
+
+![Common Features, PC25](homeo_samples_integ_figures/common_features.PC25.png)
+
+![Annotations, PC 25](homeo_samples_integ_figures/annotated.clusters.png)
+
+```{r, echo=FALSE}
+obj_integrated <- readRDS("../data/homeo_samples_integ.RDS")
+table(obj)
+```
+
+## Week May 4th - Integration of Homeostatic Samples and Smartseq2 Sample {.tabset}
+This content pertains to integration of smartseq2 and 4 homeostatic samples
+
+#### Clustering based on datasets (PC 15, 20 ,25, 30)
+
+![PC15](adj_fpkm_1828_smartseq_integ_figures/umap.by.dataset.PC15.png) 
+
+![PC 20](adj_fpkm_1828_smartseq_integ_figures/umap.by.dataset.PC20.png)
+
+![PC25](adj_fpkm_1828_smartseq_integ_figures/umap.by.dataset.PC25.png)
+
+![PC30](adj_fpkm_1828_smartseq_integ_figures/umap.by.dataset.PC30.png)
+
+
+#### Unannotated Umap Clustering (PC 15, 20 ,25, 30)
+
+![PC15](adj_fpkm_1828_smartseq_integ_figures/umap.unlabelled.PC15.png) 
+
+![PC 20](adj_fpkm_1828_smartseq_integ_figures/umap.unlabelled.PC20.png)
+
+![PC25](adj_fpkm_1828_smartseq_integ_figures/umap.unlabelled.PC25.png)
+
+![PC30](adj_fpkm_1828_smartseq_integ_figures/umap.unlabelled.PC30.png)
+
+
+#### Annotations based on PC 25
+
+![Common Features, PC25](adj_fpkm_1828_smartseq_integ_figures/common_features.PC25.png)
+
+![Annotations, PC 25](adj_fpkm_1828_smartseq_integ_figures/annotated.clusters.png)
+
+# {-}
 
 
  

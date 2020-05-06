@@ -161,6 +161,7 @@ for (pc in dim_list){
   obj_integrated <- FindNeighbors(obj_integrated, dims = 1:pc, verbose = TRUE)
   obj_integrated <- FindClusters(obj_integrated, resolution = 1.0, verbose = TRUE)
   obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:pc, verbose = TRUE)
+  DefaultAssay(obj_integrated) <- "RNA"
   png(figurePath(paste0("umap.by.dataset.PC",pc,".png"))
       ,width = 11, height = 9, units = "in", res = 300)
   print(DimPlot(obj_integrated, group.by = "data.set", cols = brewer.pal(n = 4, name = "RdBu")) + DarkTheme()) 
@@ -188,9 +189,9 @@ obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:25, verbos
 DimPlot(obj_integrated, group.by = "data.set")
 DimPlot(obj_integrated)
 
-saveRDS(object = obj_integrated, file = "../data/homeo_samples_integ.RDS")
+#saveRDS(object = obj_integrated, file = "../data/homeo_samples_integ.RDS")
 
-obj_integrated <- readRDS("../data/homeo_samples_integ.RDS")
+#obj_integrated <- readRDS("../data/homeo_samples_integ.RDS")
 
 meta_common_features <- read.table(file = "../data/gene-lists/meta_common_features.tsv", sep = "", header = T)
 
@@ -244,5 +245,5 @@ png(figurePath("annotated.clusters.png"), width = 11,
 print(umap.labeled)
 dev.off()
 
-saveRDS(object = obj_integrated, file = "../data/homeo_samples_integ.RDS")
+#saveRDS(object = obj_integrated, file = "../data/homeo_samples_integ.RDS")
 

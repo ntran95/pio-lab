@@ -112,7 +112,7 @@ seurat_obj_list <- c(split_homeo_samples_integ, split_fpkm_smartseq)
 
 all_shared_genes <- lapply(seurat_obj_list, row.names) %>% Reduce(intersect, .) 
 
-
+# =========================================================== Change Default Assay  ================================
 for (i in 1:length(seurat_obj_list)){
   #get current assay
   #print(DefaultAssay(object = seurat_obj_list[[i]]))
@@ -176,7 +176,7 @@ meta_obj_integ <- meta_obj_integ%>% mutate(data.set =case_when(str_detect(data.s
 
 obj_integrated@meta.data$data.set <- meta_obj_integ$data.set
 
-# =========================================================== UMAP/Clustering
+# =========================================================== UMAP/Clustering ===========================================================
 
 dim_list <- c(10,15,20,25,30)
 
@@ -204,6 +204,7 @@ for (pc in dim_list){
       ,width = 11, height = 9, units = "in", res = 300)
   print(DimPlot(obj_integrated, group.by = "treatment") + DarkTheme())
   dev.off()
+  DefaultAssay(obj_integrated) <- "RNA"
   integrated_featplt <- FeaturePlot(obj_integrated, common_features,
                                     reduction = "umap", pt.size = 0.25, combine = FALSE, label = TRUE)
   for (i in 1:length(integrated_featplt)) {
@@ -213,16 +214,18 @@ for (pc in dim_list){
       height = 80, units = "in", res = 200)
   print(cowplot::plot_grid(plotlist = integrated_featplt, ncol = 4))
   dev.off()
+  DefaultAssay(obj_integrated) <- "integrated"
+  
 }
 
-# =========================================================== PC 25 Annotating
+# =========================================================== PC 25 Annotating ===========================================================
 obj_integrated <- FindNeighbors(obj_integrated, dims = 1:25, verbose = TRUE)
 obj_integrated <- FindClusters(obj_integrated, resolution = 1.0, verbose = TRUE)
 obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:25, verbose = TRUE)
 DimPlot(obj_integrated, group.by = "data.set")
 print(DimPlot(obj_integrated, label = TRUE))
 
-saveRDS(object = obj_integrated, file = paste0("../data/", script_name,".RDS"))
+#saveRDS(object = obj_integrated, file = paste0("../data/", script_name,".RDS"))
 
 meta_common_features <- read.table(file = "../data/gene-lists/meta_common_features.tsv", sep = "", header = T)
 
@@ -231,7 +234,7 @@ gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t
 meta_common_features <- read.table(file = "../data/gene-lists/meta_common_features.tsv", sep = "", header = T)
 
 
-# =========================================================== Annotate -pos clusters
+# =========================================================== Annotate -pos clusters ===========================================================
 #desired unlabelled clusters passed through 
 pos_list <- c(13,20,21,22,23,24,25)
 pos_clusters <- vector(mode = "list", length = length(pos_list))

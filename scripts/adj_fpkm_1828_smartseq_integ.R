@@ -264,11 +264,12 @@ for (i in 1:length(cluster.ident)){
 names(cluster.ident.list) <- cluster.ident
 
 
+
 colnames(meta)
 cells <- list("mature-HCs" = c(6,12), "early-HCs" = c(17,19),  "HC-prog" = 16,
               "central-cells" = c(0,1,4), "D/V-cells" = c(9,8), "A/P-cells" = 7,
               "amplfying support" = c(11,18), "mantle-cells" = c(3,5), "interneuromast" = c(2,10,14,15),"col1a1b-pos" = 13,
-              "clec14a-pos" = 21, "mfap4-pos" = 23, "c1qtnf5" = 24, "apoa1b-pos" = 25, "krt91-pos" = 20, "hbbe1-pos" = 22)
+              "clec14a-pos" = 21, "mfap4-pos" = 23, "c1qtnf5-pos" = 24, "apoa1b-pos" = 25, "krt91-pos" = 20, "hbbe1-pos" = 22)
 meta$cell.type.ident <- factor(rep("", nrow(meta)),
                                levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {
@@ -286,3 +287,28 @@ dev.off()
 
 
 saveRDS(object = obj_integrated, file = paste0("../data/", script_name,".RDS"))
+# =========================================================== Remove unspecific -pos clusters ===========================================================
+Ident.list <- levels(Idents(obj_integrated))
+neuromast.list <- vector(mode = "list")
+for (i in 1:length(Ident.list)) {
+  if (grepl("-pos", Ident.list[i]) == "FALSE") {
+    neuromast.list <- append(neuromast.list, Ident.list[i])
+  }
+}
+
+obj_integrated_filtered <- subset(obj_integrated, idents = neuromast.list)
+
+levels(Idents(obj_integrated_filtered))
+
+DimPlot(obj_integrated_filtered)
+
+# =========================================================== Recluster after subsetting  ===========================================================
+#obj_integrated_filtered <- ScaleData(obj_integrated_filtered, verbose = TRUE, vars.to.regress = "nCount_RNA")
+obj_integrated_filtered <- RunPCA(obj_integrated_filtered, npcs = 100, verbose = TRUE, features = NULL)
+obj_integrated_filtered <- FindNeighbors(obj_integrated_filtered, dims = 1:25, verbose = TRUE)
+obj_integrated_filtered <- FindClusters(obj_integrated_filtered, resolution = 1.0, verbose = TRUE)
+obj_integrated_filtered <- RunUMAP(obj_integrated_filtered, reduction = "pca", dims = 1:25, verbose = TRUE)
+DimPlot(obj_integrated_filtered, group.by = "data.set")
+DimPlot(obj_integrated_filtered)
+
+

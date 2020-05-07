@@ -267,3 +267,11 @@ obj_integrated_filtered <- subset(obj_integrated, idents = neuromast.list)
 levels(Idents(obj_integrated_filtered))
 
 DimPlot(obj_integrated_filtered)
+
+# =========================================================== Recluster after subsetting  ===========================================================
+obj_integrated_filtered <- RunPCA(obj_integrated_filtered, npcs = 100, verbose = TRUE, features = NULL)
+obj_integrated_filtered <- FindNeighbors(obj_integrated_filtered, dims = 1:25, verbose = TRUE)
+obj_integrated_filtered <- FindClusters(obj_integrated_filtered, resolution = 1.0, verbose = TRUE)
+obj_integrated_filtered <- RunUMAP(obj_integrated_filtered, reduction = "pca", dims = 1:25, verbose = TRUE)
+DimPlot(obj_integrated_filtered, group.by = "data.set")
+DimPlot(obj_integrated_filtered)

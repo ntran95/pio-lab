@@ -249,10 +249,10 @@ for (x in 1:length(pos_list)){
 
 names(pos_clusters) <- paste("cluster_", pos_list)
 
-# =========================================================== Annotate neuromast clusters
+# =========================================================== Annotate neuromast clusters  ===========================================================
 meta <- obj_integrated@meta.data
 
-cluster.ident <- strsplit(unique(na.omit(meta$cell.type.ident)), split = "[][']|,\\s*")
+cluster.ident <- strsplit(unique(as.character(na.omit(meta$cell.type.ident))), split = "[][']|,\\s*")
 
 cluster.ident.list <- vector("list", length = length(cluster.ident))
 
@@ -263,6 +263,7 @@ for (i in 1:length(cluster.ident)){
 
 names(cluster.ident.list) <- cluster.ident
 
+# =========================================================== Rename integ clusters  ===========================================================
 
 
 colnames(meta)
@@ -302,15 +303,7 @@ levels(Idents(obj_integrated_filtered))
 
 DimPlot(obj_integrated_filtered)
 
-# =========================================================== Recluster after subsetting  ===========================================================
-#obj_integrated_filtered <- ScaleData(obj_integrated_filtered, verbose = TRUE, vars.to.regress = "nCount_RNA")
-obj_integrated_filtered <- RunPCA(obj_integrated_filtered, npcs = 100, verbose = TRUE, features = NULL)
-obj_integrated_filtered <- FindNeighbors(obj_integrated_filtered, dims = 1:25, verbose = TRUE)
-obj_integrated_filtered <- FindClusters(obj_integrated_filtered, resolution = 1.0, verbose = TRUE)
-obj_integrated_filtered <- RunUMAP(obj_integrated_filtered, reduction = "pca", dims = 1:25, verbose = TRUE)
-DimPlot(obj_integrated_filtered, group.by = "data.set")
-DimPlot(obj_integrated_filtered)
-
+# =========================================================== Recluster filtered obj after subsetting  ===========================================================
 
 dim_list <- c(10,15,20,25,30)
 
@@ -346,3 +339,51 @@ for (pc in dim_list){
   
 }
 
+png(figurePath(paste0("filtered.elbowplot.png")), width = 11, height = 9, units = "in", res = 300)
+print(ElbowPlot(object = obj_integrated_filtered, ndims = 30))
+dev.off()
+
+# =========================================================== PC 15 Filtered Annotating ===========================================================
+obj_integrated_filtered <- RunPCA(obj_integrated_filtered, npcs = 100, verbose = TRUE, features = NULL)
+obj_integrated_filtered <- FindNeighbors(obj_integrated_filtered, dims = 1:15, verbose = TRUE)
+obj_integrated_filtered <- FindClusters(obj_integrated_filtered, resolution = 1.0, verbose = TRUE)
+obj_integrated_filtered <- RunUMAP(obj_integrated_filtered, reduction = "pca", dims = 1:15, verbose = TRUE)
+
+meta_filterd <- obj_integrated_filtered@meta.data
+
+#split the cell cluster idents extracted from metadata into a uniquely named list
+cluster.ident.filtered <- strsplit(unique(as.character(meta_filterd$cell.type.ident)), split = "[][']|,\\s*")
+
+#create empty list to store counts of cells to cluster idents
+cluster.ident.filtered.list <- vector("list", length = length(cluster.ident.filtered))
+
+#loop through the cell type ident, match it with the ident from the metadata, tally up the numberof cells expressed in that cluster
+for (i in 1:length(cluster.ident.filtered)){
+  cluster.ident.filtered.list[[i]] <- meta_filterd %>% filter(cell.type.ident == cluster.ident.filtered[[i]]) %>% count(seurat_clusters, sort =TRUE)
+  print(cluster.ident.filtered[[i]])
+}
+
+names(cluster.ident.filtered.list) <- cluster.ident.filtered
+
+cluster.ident.filtered.list$`A/P-cells`
+
+# =========================================================== Rename filtered integ clusters  ===========================================================
+
+colnames(meta_filterd)
+cells <- list("mature-HCs" = c(6,13), "early-HCs" = c(18,19),  "HC-prog" = 16,
+              "central-cells" = c(2,3,8,11), "D/V-cells" = c(0,10), "A/P-cells" = 7,
+              "amplfying support" = c(12,17), "mantle-cells" = c(4,5), "interneuromast" = c(1,9,14,15))
+meta_filterd$cell.type.ident <- factor(rep("", nrow(meta_filterd)),
+                               levels = names(cells), ordered = TRUE)
+for (i in 1:length(cells)) {
+  meta_filterd$cell.type.ident[meta_filterd$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
+}
+obj_integrated_filtered@meta.data <- meta_filterd
+Idents(obj_integrated_filtered) <- obj_integrated_filtered@meta.data$cell.type.ident
+
+filtered.umap.labeled <- DimPlot(obj_integrated_filtered, reduction = "umap", label = TRUE, pt.size= 0.4) + NoLegend()
+
+png(figurePath("filtered.annotated.clusters.png"), width = 11,
+    height = 9, units = "in", res = 200)
+print(filtered.umap.labeled)
+dev.off()

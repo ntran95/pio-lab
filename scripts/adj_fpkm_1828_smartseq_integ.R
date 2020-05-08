@@ -312,3 +312,37 @@ DimPlot(obj_integrated_filtered, group.by = "data.set")
 DimPlot(obj_integrated_filtered)
 
 
+dim_list <- c(10,15,20,25,30)
+
+common_features <- scan(paste0("../data/gene-lists/common_neuromast_features.txt"), what = "character")
+
+for (pc in dim_list){
+  obj_integrated_filtered <- FindNeighbors(obj_integrated_filtered, dims = 1:pc, verbose = TRUE)
+  obj_integrated_filtered <- FindClusters(obj_integrated_filtered, resolution = 1.0, verbose = TRUE)
+  obj_integrated_filtered <- RunUMAP(obj_integrated_filtered, reduction = "pca", dims = 1:pc, verbose = TRUE)
+  png(figurePath(paste0("filtered.umap.by.dataset.PC",pc,".png"))
+      ,width = 11, height = 9, units = "in", res = 300)
+  print(DimPlot(obj_integrated_filtered, group.by = "data.set", cols = brewer.pal(n = 6, name = "RdBu")) + DarkTheme()) 
+  dev.off()
+  png(figurePath(paste0("filtered.umap.unlabelled.PC",pc,".png"))
+      ,width = 11, height = 9, units = "in", res = 300)
+  print(DimPlot(obj_integrated_filtered))
+  dev.off()
+  png(figurePath(paste0("filtered.umap.by.treatment.PC", pc,".png"))
+      ,width = 11, height = 9, units = "in", res = 300)
+  print(DimPlot(obj_integrated_filtered, group.by = "treatment") + DarkTheme())
+  dev.off()
+  DefaultAssay(obj_integrated_filtered) <- "RNA"
+  integrated_featplt <- FeaturePlot(obj_integrated_filtered, common_features,
+                                    reduction = "umap", pt.size = 0.25, combine = FALSE, label = TRUE)
+  for (i in 1:length(integrated_featplt)) {
+    integrated_featplt[[i]] <- integrated_featplt[[i]] + NoLegend() + NoAxes()
+  }
+  png(figurePath(paste0("filtered.common_features.PC",pc,".png")), width = 40,
+      height = 80, units = "in", res = 200)
+  print(cowplot::plot_grid(plotlist = integrated_featplt, ncol = 4))
+  dev.off()
+  DefaultAssay(obj_integrated_filtered) <- "integrated"
+  
+}
+

@@ -62,3 +62,16 @@ DGEtable <- function(seurat_obj, ident.1, ident.2) {
 }
 
 y <-DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = "central-cells_1hr_smartseq2", ident.2 = "central-cells_homeo_smartseq2")
+
+meta <- obj_integrated_filtered@meta.data
+
+cluster.ident <- strsplit(unique(as.character(na.omit(meta$cell.type.ident))), split = "[][']|,\\s*")
+
+cluster.ident.list <- vector("list", length = length(cluster.ident))
+
+for (i in 1:length(cluster.ident)){
+  print(paste0("working on cluster: ",cluster.ident[[i]]))
+  cluster.ident.list[[i]] <- DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = paste0(cluster.ident[[i]],"_1hr_smartseq2"), ident.2 = paste0(cluster.ident[[i]],"_homeo_smartseq2"))
+  assign(paste0(cluster.ident[[i]],".DGE.1hrvHomeo"), DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = paste0(cluster.ident[[i]],"_1hr_smartseq2"), ident.2 = paste0(cluster.ident[[i]],"_homeo_smartseq2")))
+}
+

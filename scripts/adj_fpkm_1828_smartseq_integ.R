@@ -160,7 +160,7 @@ if (SC_transform) {
   
 }
 
-# =========================================================== Adjust object integrated metadata
+# =========================================================== Adjust object integrated metadata ===========================================================
 
 obj_integrated@meta.data$data.set <- factor(obj_integrated@meta.data$data.set, ordered = TRUE)
 
@@ -176,6 +176,17 @@ meta_obj_integ <- meta_obj_integ%>% mutate(data.set =case_when(str_detect(data.s
 
 obj_integrated@meta.data$data.set <- meta_obj_integ$data.set
 
+#specify sequencing method (useful for DGE in downstream analysis)
+
+meta_obj_integ <- meta_obj_integ%>% mutate(seq.method =case_when(str_detect(data.set, "homeo-10X-isl1") ~ "10X",
+                                                              str_detect(data.set, "homeo-2047") ~ "10X", 
+                                                                 str_detect(data.set, "homeo-2410-7") ~ "10X",
+                                                                 str_detect(data.set, "homeo-2410-8") ~ "10X",
+                                                               str_detect(data.set, "homeo-smrtseq") ~ "smartseq2",
+                                                               str_detect(data.set, "1hr-smrtseq") ~ "smartseq2",
+                                                               TRUE ~ as.vector(obj_integrated@meta.data$data.set)))
+
+obj_integrated@meta.data$seq.method <- meta_obj_integ$seq.method
 # =========================================================== UMAP/Clustering ===========================================================
 
 dim_list <- c(10,15,20,25,30)
@@ -225,7 +236,7 @@ obj_integrated <- RunUMAP(obj_integrated, reduction = "pca", dims = 1:25, verbos
 DimPlot(obj_integrated, group.by = "data.set")
 print(DimPlot(obj_integrated, label = TRUE))
 
-#saveRDS(object = obj_integrated, file = paste0("../data/", script_name,".RDS"))
+saveRDS(object = obj_integrated, file = paste0("../data/", script_name,".RDS"))
 
 meta_common_features <- read.table(file = "../data/gene-lists/meta_common_features.tsv", sep = "", header = T)
 
@@ -387,3 +398,6 @@ png(figurePath("filtered.annotated.clusters.png"), width = 11,
     height = 9, units = "in", res = 200)
 print(filtered.umap.labeled)
 dev.off()
+
+saveRDS(object = obj_integrated_filtered, file = paste0("../data/filtered_", script_name,".RDS"))
+

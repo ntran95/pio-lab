@@ -44,7 +44,7 @@ x <- FindMarkers(obj_integrated_filtered, ident.1 = "central-cells_1hr_smartseq2
 DGEtable <- function(seurat_obj, ident.1, ident.2) {
   gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
   #if there isn't a column in the metadata specifying cluster ident by treatments, make one
-  if (length(seurat_obj$cell.type.treatment.method) == 0) {
+  if(!"cell.type.treatment.method" %in% colnames(seurat_obj@meta.data)){
     print("creating new column in metadata")
     seurat_obj$cell.type.treatment.method <- paste(Idents(seurat_obj), seurat_obj$treatment, seurat_obj$seq.method, sep = "_")
   }
@@ -74,4 +74,18 @@ for (i in 1:length(cluster.ident)){
   cluster.ident.list[[i]] <- DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = paste0(cluster.ident[[i]],"_1hr_smartseq2"), ident.2 = paste0(cluster.ident[[i]],"_homeo_smartseq2"))
   assign(paste0(cluster.ident[[i]],".DGE.1hrvHomeo"), DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = paste0(cluster.ident[[i]],"_1hr_smartseq2"), ident.2 = paste0(cluster.ident[[i]],"_homeo_smartseq2")))
 }
+
+# =========================================================== Read in Sungmin's Regen App data
+file_list <- list.files(path="../sungminregenappDGE/")
+
+temp <- vector("list", length = length(file_list))
+
+setwd("../data/sungminregenappDGE/")
+
+for (i in 1:length(file_list)){
+  temp[[i]] <- read.table(file = file_list[[i]], header = TRUE, sep = "\t")
+  assign(paste0(gsub(".tsv", "" ,file_list[[i]]),"sungmin.regen.app"), read.table(file = file_list[[i]], header = TRUE, sep = "\t"))
+}
+
+names(temp) <- gsub(".tsv", "", file_list)
 

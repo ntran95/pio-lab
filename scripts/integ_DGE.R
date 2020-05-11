@@ -9,7 +9,7 @@ library(cowplot)
 # library(ggrepel)
 library(ggrepel)
 library(stringr)
-library(patchwork)
+#library(patchwork)
 options(future.globals.maxSize = 5000 * 1024^2)
 
 
@@ -25,7 +25,7 @@ if (TRUE) {
   #devtools::load_all("/n/projects/ddiaz/Analysis/Scripts/SeuratExtensions")
 }
 
-# =========================================================== Load filtered integ smartseq and homeo object
+# =========================================================== Load filtered integ smartseq and homeo object =================================================
 
 obj_integrated_filtered <- readRDS("../data/filtered_adj_fpkm_1828_smartseq_integ.RDS")
 
@@ -40,9 +40,14 @@ Idents(obj_integrated_filtered) <- "cell.type.treatment.method"
 x <- FindMarkers(obj_integrated_filtered, ident.1 = "central-cells_1hr_smartseq2", ident.2 = "central-cells_homeo_smartseq2", verbose = TRUE)
 
 
-# =========================================================== Create Function for DGE table
+# =========================================================== Create Function for DGE table =================================================
 DGEtable <- function(seurat_obj, ident.1, ident.2) {
   gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
+  #ensure that the default assay is switched to "RNA" prior to DGE analysis
+  if (DefaultAssay(obj_integrated_filtered) == "integrated"){
+    print("switching assay to RNA")
+    DefaultAssay(seurat_obj) <- "RNA"
+  }
   #if there isn't a column in the metadata specifying cluster ident by treatments, make one
   if(!"cell.type.treatment.method" %in% colnames(seurat_obj@meta.data)){
     print("creating new column in metadata")
@@ -75,17 +80,21 @@ for (i in 1:length(cluster.ident)){
   assign(paste0(cluster.ident[[i]],".DGE.1hrvHomeo"), DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = paste0(cluster.ident[[i]],"_1hr_smartseq2"), ident.2 = paste0(cluster.ident[[i]],"_homeo_smartseq2")))
 }
 
-# =========================================================== Read in Sungmin's Regen App data
-file_list <- list.files(path="../sungminregenappDGE/")
-
-temp <- vector("list", length = length(file_list))
-
+# =========================================================== Read in Sungmin's Regen App data  =================================================s
 setwd("../data/sungminregenappDGE/")
 
+file_list <- list.files(path="../sungminregenappDGE/")
+
+sungmin.regen.cluster.ident.list <- vector("list", length = length(file_list))
+
 for (i in 1:length(file_list)){
-  temp[[i]] <- read.table(file = file_list[[i]], header = TRUE, sep = "\t")
-  assign(paste0(gsub(".tsv", "" ,file_list[[i]]),"sungmin.regen.app"), read.table(file = file_list[[i]], header = TRUE, sep = "\t"))
+  sungmin.regen.cluster.list[[i]] <- read.table(file = file_list[[i]], header = TRUE, sep = "\t")
+  assign(paste0(gsub(".tsv", "" ,file_list[[i]]),".sungmin.regen.app"), read.table(file = file_list[[i]], header = TRUE, sep = "\t"))
 }
 
-names(temp) <- gsub(".tsv", "", file_list)
+names(sungmin.regen.cluster.ident.list) <- gsub(".tsv", "", file_list)
 
+# =========================================================== Merge smartseq and sungmin's regen DGE  =================================================s
+
+merge <- merge(x = `A/P-cells.DGE.1hrvHomeo`, y = `AP-cells.sungmin.regen.app`, suffixes = c(".smrtseq2", ".regen.app"),
+               by = c("Gene.name.uniq", "Gene.stable.ID", "Gene.name", "ZFIN.ID", "Gene.description"), sort = FALSE)

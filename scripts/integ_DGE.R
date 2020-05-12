@@ -9,6 +9,7 @@ library(cowplot)
 # library(ggrepel)
 library(ggrepel)
 library(stringr)
+library(ggrepel)
 #library(patchwork)
 options(future.globals.maxSize = 5000 * 1024^2)
 
@@ -20,7 +21,7 @@ if (TRUE) {
   
   script_name <- "integ_DGE"
   
-  figurePath <- function(filename, format){paste0("/pio-lab/scripts/", script_name, "_figures/", filename)}
+  figurePath <- function(filename, format){paste0(script_name, "_figures/", filename)}
   
   #devtools::load_all("/n/projects/ddiaz/Analysis/Scripts/SeuratExtensions")
 }
@@ -61,7 +62,7 @@ DGEtable <- function(seurat_obj, ident.1, ident.2) {
   names(df)
   #merge gene table with all markers generated based on uniq gene symbol
   df <- merge(df, gene_table, by = "Gene.name.uniq") 
-  #reorder df in ascending order based on cluster (col #7) and then avg_logFC (col#3)
+  #reorder df in ascending order based on avg_logFC (col#3)
   df <- df[order( df[,3], decreasing = TRUE),]
   return(df)
 }
@@ -104,14 +105,25 @@ merged.data <- vector("list", length = length(cluster.ident))
 
 conserved.smrtseq <- vector("list", length = length(cluster.ident))
 
+scatterplot.list <- vector("list", length = length(cluster.ident))
+
 for (i in 1:length(cluster.ident)) {
   #merge the smrtseq data with sungmin's data, store within a list, merged.data
   merged.data[[i]] <- merge(x = cluster.ident.list[[i]], y = sungmin.regen.cluster.ident.list[[i]], suffixes = c(".smrtseq2", ".regen.app"),
                             by = c("Gene.name.uniq", "Gene.stable.ID", "Gene.name", "ZFIN.ID", "Gene.description"), sort = FALSE, all = TRUE)
   merged.data[[i]]$diff_avg_logFC <- merged.data[[i]]$avg_logFC.smrtseq2 - merged.data[[i]]$avg_logFC.regen.app
-  scatterplot.list[[i]] <- ggplot(merged.data[[i]], aes(avg_logFC.regen.app, avg_logFC.smrtseq2, label = Gene.name.uniq)) + geom_point() + ggtitle(paste0(cluster.ident[[i]]))+geom_text(aes(label=Gene.name.uniq),hjust=0, vjust=0) + coord_fixed(xlim = c(-1, 3), ylim = c(-1,3)) + scale_x_continuous(name ="Sungmin Regen App - avg LogFC")
+  #generate scatterplots
   png(figurePath(paste0(cluster.ident[[i]], ".png")), width = 11,
       height = 9, units = "in", res = 200)
+  scatterplot.list[[i]] <- ggplot(merged.data[[i]], aes(avg_logFC.regen.app, avg_logFC.smrtseq2, label = Gene.name.uniq)) + 
+    geom_point() + 
+    ggtitle(paste0(cluster.ident[[i]])) + 
+    geom_text(aes(label=Gene.name.uniq),hjust=0, vjust=0) + 
+    coord_fixed(xlim = c(-1, 3), ylim = c(-1,3)) + 
+    scale_x_continuous(name ="Sungmin Regen App - avg LogFC - 1hrVShomeo") +
+    scale_y_continuous(name = "smartseq2 - avg LogFC - 1hrVShomeo")
+  print(scatterplot.list[[i]])
+  dev.off()
   #look through each row of the merged dataframe for each cluster ident
   for (x in 1:nrow(merged.data[[i]])){
     #search for NA's in the avg logFC for sungmin's dataset, indicating genes that are only conserved in the smrtseq data
@@ -123,6 +135,8 @@ for (i in 1:length(cluster.ident)) {
 }
 names(merged.data) <- cluster.ident
 names(conserved.smrtseq) <- cluster.ident
+names(scatterplot.list) <- cluster.ident
+
 
 merge <- merge(x = `AP-cells.smrtseq.1hrvHomeo`, y = `AP-cells.sungmin.1hrvHomeo`, suffixes = c(".smrtseq2", ".regen.app"),
                by = c("Gene.name.uniq", "Gene.stable.ID", "Gene.name", "ZFIN.ID", "Gene.description"), sort = FALSE, all = TRUE)
@@ -132,7 +146,13 @@ amp <-merged.data$`amp-SCs`
 scatterplot.list <- vector("list", length = length(cluster.ident))
 
 for (i in 1:length(cluster.ident)) {
-  scatterplot.list[[i]] <- ggplot(merged.data[[i]], aes(avg_logFC.regen.app, avg_logFC.smrtseq2, label = Gene.name.uniq)) + geom_point() + ggtitle(paste0(cluster.ident[[i]]))+geom_text(aes(label=Gene.name.uniq),hjust=0, vjust=0) + coord_fixed(xlim = c(-1, 3), ylim = c(-1,3)) + scale_x_continuous(name ="Sungmin Regen App - avg LogFC")
+  scatterplot.list[[i]] <- ggplot(merged.data[[i]], aes(avg_logFC.regen.app, avg_logFC.smrtseq2, label = Gene.name.uniq))  + coord_fixed(xlim = c(-1, 3), ylim = c(-1,3)) + scale_x_continuous(name ="Sungmin Regen App - avg LogFC") +
+    geom_label_repel(aes(label = Gene.name.uniq),
+                     box.padding   = 0.35, 
+                     point.padding = 0.5,
+                     segment.color = 'grey50') +  theme_classic() +
+    geom_point(color = "blue", size = 3)
+  print(scatterplot.list[[i]])
   }
 names(scatterplot.list) <- cluster.ident
 

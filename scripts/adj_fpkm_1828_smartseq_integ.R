@@ -279,8 +279,8 @@ names(cluster.ident.list) <- cluster.ident
 
 colnames(meta)
 cells <- list("mature-HCs" = c(6,12), "early-HCs" = c(17,19),  "HC-prog" = 16,
-              "central-cells" = c(0,1,4), "D/V-cells" = c(9,8), "A/P-cells" = 7,
-              "amplfying support" = c(11,18), "mantle-cells" = c(3,5), "interneuromast" = c(2,10,14,15),"col1a1b-pos" = 13,
+              "central-cells" = c(0,1,4), "DV-cells" = c(9,8), "AP-cells" = 7,
+              "amp-SCs" = c(11,18), "mantle-cells" = c(3,5), "Inm" = c(2,10,14,15),"col1a1b-pos" = 13,
               "clec14a-pos" = 21, "mfap4-pos" = 23, "c1qtnf5-pos" = 24, "apoa1b-pos" = 25, "krt91-pos" = 20, "hbbe1-pos" = 22)
 meta$cell.type.ident <- factor(rep("", nrow(meta)),
                                levels = names(cells), ordered = TRUE)
@@ -376,14 +376,14 @@ for (i in 1:length(cluster.ident.filtered)){
 
 names(cluster.ident.filtered.list) <- cluster.ident.filtered
 
-cluster.ident.filtered.list$`A/P-cells`
+cluster.ident.filtered.list$`AP-cells`
 
 # =========================================================== Rename filtered integ clusters  ===========================================================
 
 colnames(meta_filterd)
 cells <- list("mature-HCs" = c(6,13), "early-HCs" = c(18,19),  "HC-prog" = 16,
-              "central-cells" = c(2,3,8,11), "D/V-cells" = c(0,10), "A/P-cells" = 7,
-              "amplfying support" = c(12,17), "mantle-cells" = c(4,5), "interneuromast" = c(1,9,14,15))
+              "central-cells" = c(2,3,8,11), "DV-cells" = c(0,10), "AP-cells" = 7,
+              "amp-SCs" = c(12,17), "mantle-cells" = c(4,5), "Inm" = c(1,9,14,15))
 meta_filterd$cell.type.ident <- factor(rep("", nrow(meta_filterd)),
                                levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {

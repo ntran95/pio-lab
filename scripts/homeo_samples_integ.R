@@ -233,8 +233,8 @@ names(pos_clusters) <- paste("cluster_", pos_list)
 meta <- obj_integrated@meta.data
 colnames(meta)
 cells <- list("mature-HCs" = 0, "early-HCs" = 14,  "HC-prog" = 16,
-              "central-cells" = c(1,2,3,9,19), "D/V-cells" = c(10), "A/P-cells" = c(8,18),
-              "amplfying support" = c(11,17), "mantle-cells" = c(5,6), "interneuromast" = c(4,7,13,15),"col1a1b-pos" = 12,
+              "central-cells" = c(1,2,3,9,19), "DV-cells" = c(10), "AP-cells" = c(8,18),
+              "amp-SCs" = c(11,17), "mantle-cells" = c(5,6), "Inm" = c(4,7,13,15),"col1a1b-pos" = 12,
               "clec14a-pos" = 21, "mfap4-pos" = 23, "c1qtnf5-pos" = 24, "apoa1b-pos" = 25, "krt91-pos" = 20, "hbbe1-pos" = 22)
 meta$cell.type.ident <- factor(rep("", nrow(meta)),
                                levels = names(cells), ordered = TRUE)
@@ -269,6 +269,7 @@ levels(Idents(obj_integrated_filtered))
 DimPlot(obj_integrated_filtered)
 
 # =========================================================== Recluster after subsetting  ===========================================================
+#obj_integrated_filtered <- ScaleData(obj_integrated_filtered, verbose = TRUE, vars.to.regress = "nCount_RNA")
 obj_integrated_filtered <- RunPCA(obj_integrated_filtered, npcs = 100, verbose = TRUE, features = NULL)
 obj_integrated_filtered <- FindNeighbors(obj_integrated_filtered, dims = 1:25, verbose = TRUE)
 obj_integrated_filtered <- FindClusters(obj_integrated_filtered, resolution = 1.0, verbose = TRUE)

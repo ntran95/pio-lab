@@ -70,15 +70,18 @@ y <-DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = "central-cells_1hr_
 
 meta <- obj_integrated_filtered@meta.data
 
-cluster.ident <- strsplit(unique(as.character(na.omit(meta$cell.type.ident))), split = "[][']|,\\s*")
+#sort alphabetically, extract unique cluster idents, omit NA's, turn to characters, split each idents into elements of list
+cluster.ident <- strsplit(sort(unique(as.character(na.omit(meta$cell.type.ident)))), split = "[][']|,\\s*")
 
 cluster.ident.list <- vector("list", length = length(cluster.ident))
 
 for (i in 1:length(cluster.ident)){
   print(paste0("working on cluster: ",cluster.ident[[i]]))
   cluster.ident.list[[i]] <- DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = paste0(cluster.ident[[i]],"_1hr_smartseq2"), ident.2 = paste0(cluster.ident[[i]],"_homeo_smartseq2"))
-  assign(paste0(cluster.ident[[i]],".DGE.1hrvHomeo"), DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = paste0(cluster.ident[[i]],"_1hr_smartseq2"), ident.2 = paste0(cluster.ident[[i]],"_homeo_smartseq2")))
+  assign(paste0(cluster.ident[[i]],".smrtseq.1hrvHomeo"), DGEtable(seurat_obj = obj_integrated_filtered, ident.1 = paste0(cluster.ident[[i]],"_1hr_smartseq2"), ident.2 = paste0(cluster.ident[[i]],"_homeo_smartseq2")))
 }
+
+names(cluster.ident.list) <- cluster.ident
 
 # =========================================================== Read in Sungmin's Regen App data  =================================================s
 setwd("../data/sungminregenappDGE/")
@@ -88,13 +91,49 @@ file_list <- list.files(path="../sungminregenappDGE/")
 sungmin.regen.cluster.ident.list <- vector("list", length = length(file_list))
 
 for (i in 1:length(file_list)){
-  sungmin.regen.cluster.list[[i]] <- read.table(file = file_list[[i]], header = TRUE, sep = "\t")
-  assign(paste0(gsub(".tsv", "" ,file_list[[i]]),".sungmin.regen.app"), read.table(file = file_list[[i]], header = TRUE, sep = "\t"))
+  sungmin.regen.cluster.ident.list[[i]] <- read.table(file = file_list[[i]], header = TRUE, sep = "\t")
+  assign(paste0(gsub(".tsv", "" ,file_list[[i]]),".sungmin.1hrvHomeo"), read.table(file = file_list[[i]], header = TRUE, sep = "\t"))
 }
 
 names(sungmin.regen.cluster.ident.list) <- gsub(".tsv", "", file_list)
 
 # =========================================================== Merge smartseq and sungmin's regen DGE  =================================================s
 
-merge <- merge(x = `A/P-cells.DGE.1hrvHomeo`, y = `AP-cells.sungmin.regen.app`, suffixes = c(".smrtseq2", ".regen.app"),
-               by = c("Gene.name.uniq", "Gene.stable.ID", "Gene.name", "ZFIN.ID", "Gene.description"), sort = FALSE)
+#empty list to store merged DGE tables
+merged.data <- vector("list", length = length(cluster.ident))
+
+conserved.smrtseq <- vector("list", length = length(cluster.ident))
+
+for (i in 1:length(cluster.ident)) {
+  #merge the smrtseq data with sungmin's data, store within a list, merged.data
+  merged.data[[i]] <- merge(x = cluster.ident.list[[i]], y = sungmin.regen.cluster.ident.list[[i]], suffixes = c(".smrtseq2", ".regen.app"),
+                            by = c("Gene.name.uniq", "Gene.stable.ID", "Gene.name", "ZFIN.ID", "Gene.description"), sort = FALSE, all = TRUE)
+  merged.data[[i]]$diff_avg_logFC <- merged.data[[i]]$avg_logFC.smrtseq2 - merged.data[[i]]$avg_logFC.regen.app
+  scatterplot.list[[i]] <- ggplot(merged.data[[i]], aes(avg_logFC.regen.app, avg_logFC.smrtseq2, label = Gene.name.uniq)) + geom_point() + ggtitle(paste0(cluster.ident[[i]]))+geom_text(aes(label=Gene.name.uniq),hjust=0, vjust=0) + coord_fixed(xlim = c(-1, 3), ylim = c(-1,3)) + scale_x_continuous(name ="Sungmin Regen App - avg LogFC")
+  png(figurePath(paste0(cluster.ident[[i]], ".png")), width = 11,
+      height = 9, units = "in", res = 200)
+  #look through each row of the merged dataframe for each cluster ident
+  for (x in 1:nrow(merged.data[[i]])){
+    #search for NA's in the avg logFC for sungmin's dataset, indicating genes that are only conserved in the smrtseq data
+    if (is.na(merged.data[[i]]$avg_logFC.regen.app[x]) == "TRUE"){
+      conserved.smrtseq[[i]] <- merged.data[[i]] %>% select(Gene.name.uniq, avg_logFC.smrtseq2, avg_logFC.regen.app)
+    }
+  }
+  
+}
+names(merged.data) <- cluster.ident
+names(conserved.smrtseq) <- cluster.ident
+
+merge <- merge(x = `AP-cells.smrtseq.1hrvHomeo`, y = `AP-cells.sungmin.1hrvHomeo`, suffixes = c(".smrtseq2", ".regen.app"),
+               by = c("Gene.name.uniq", "Gene.stable.ID", "Gene.name", "ZFIN.ID", "Gene.description"), sort = FALSE, all = TRUE)
+
+amp <-merged.data$`amp-SCs`
+
+scatterplot.list <- vector("list", length = length(cluster.ident))
+
+for (i in 1:length(cluster.ident)) {
+  scatterplot.list[[i]] <- ggplot(merged.data[[i]], aes(avg_logFC.regen.app, avg_logFC.smrtseq2, label = Gene.name.uniq)) + geom_point() + ggtitle(paste0(cluster.ident[[i]]))+geom_text(aes(label=Gene.name.uniq),hjust=0, vjust=0) + coord_fixed(xlim = c(-1, 3), ylim = c(-1,3)) + scale_x_continuous(name ="Sungmin Regen App - avg LogFC")
+  }
+names(scatterplot.list) <- cluster.ident
+
+scatterplot.list$`early-HCs`

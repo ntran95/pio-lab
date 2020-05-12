@@ -124,13 +124,9 @@ for (i in 1:length(cluster.ident)) {
     scale_y_continuous(name = "smartseq2 - avg LogFC - 1hrVShomeo")
   print(scatterplot.list[[i]])
   dev.off()
-  #look through each row of the merged dataframe for each cluster ident
-  for (x in 1:nrow(merged.data[[i]])){
-    #search for NA's in the avg logFC for sungmin's dataset, indicating genes that are only conserved in the smrtseq data
-    if (is.na(merged.data[[i]]$avg_logFC.regen.app[x]) == "TRUE"){
-      conserved.smrtseq[[i]] <- merged.data[[i]] %>% select(Gene.name.uniq, avg_logFC.smrtseq2, avg_logFC.regen.app)
-    }
-  }
+  #filter avg_logFC in sungmin's regen dataset for NA's, rearrange to show avg_logFC between smartseq and sungmins
+  conserved.smrtseq[[i]] <- filter(merged.data[[i]], is.na(avg_logFC.regen.app) == "TRUE") %>% select(Gene.name.uniq, avg_logFC.smrtseq2, avg_logFC.regen.app)
+  
   
 }
 names(merged.data) <- cluster.ident
@@ -143,17 +139,46 @@ merge <- merge(x = `AP-cells.smrtseq.1hrvHomeo`, y = `AP-cells.sungmin.1hrvHomeo
 
 amp <-merged.data$`amp-SCs`
 
-scatterplot.list <- vector("list", length = length(cluster.ident))
 
 for (i in 1:length(cluster.ident)) {
-  scatterplot.list[[i]] <- ggplot(merged.data[[i]], aes(avg_logFC.regen.app, avg_logFC.smrtseq2, label = Gene.name.uniq))  + coord_fixed(xlim = c(-1, 3), ylim = c(-1,3)) + scale_x_continuous(name ="Sungmin Regen App - avg LogFC") +
-    geom_label_repel(aes(label = Gene.name.uniq),
-                     box.padding   = 0.35, 
-                     point.padding = 0.5,
-                     segment.color = 'grey50') +  theme_classic() +
-    geom_point(color = "blue", size = 3)
-  print(scatterplot.list[[i]])
+  conserved.smrtseq[[i]] <- filter(merged.data[[i]], is.na(avg_logFC.regen.app) == "TRUE") %>% select(Gene.name.uniq, avg_logFC.smrtseq2, avg_logFC.regen.app)
   }
-names(scatterplot.list) <- cluster.ident
+names(conserved.smrtseq) <- cluster.ident
 
-scatterplot.list$`early-HCs`
+# =========================================================== Volcano Plot  =================================================s
+
+amp$threshold <- as.factor(amp$p_val.smrtseq2 < 0.05)
+
+g <- ggplot(data=amp, 
+             aes(x=avg_logFC.smrtseq2, y =-log(p_val.smrtseq2), 
+                 colour=threshold)) +
+  geom_point(alpha=0.7, size=1.75) +
+  #xlim(c(-3, 3)) +
+  xlab("log2 fold change") + ylab("-log10 p-value") +
+  theme(legend.position = "right",
+         plot.title = element_text(size = rel(1.5), hjust = 0.5),
+         axis.title = element_text(size = rel(1.25))) + theme_bw() +
+  ggtitle("Cluster: ")
+
+
+
+for (i in 1:length(cluster.ident)){
+  
+}
+#label genes that are upregulated
+upreg.genes.to.label <- amp$Gene.name.uniq[1:20]
+#label genes that are downregulated
+downreg.genes.to.label <- tail(amp$Gene.name.uniq, 20)
+
+with(amp, plot(avg_logFC, -log10(p_val), pch=20, main="Volcano plot", col = "grey"))
+grid(NULL,NULL, lty = 6, col = "lightgrey") 
+with(subset(amp , p_val<.05), points(avg_logFC, -log10(p_val), pch=20,col="black"))
+with(subset(amp, (avg_logFC)>1), points(avg_logFC, -log10(p_val), pch=20, col="green"))
+with(subset(amp,(avg_logFC)<(1*-1)), points(avg_logFC, -log10(p_val), pch=20, col="red"))
+#specify points to label - upreg
+text(amp$avg_logFC[1:20], -log10(amp$p_val[1:20]),labels=upreg.genes.to.label)
+#specify points to label - downreg
+text(tail(amp$avg_logFC, 20), -log10(tail(amp$p_val, 20)), labels = downreg.genes.to.label)
+
+
+

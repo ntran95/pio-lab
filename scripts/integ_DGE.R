@@ -30,17 +30,7 @@ if (TRUE) {
 
 obj_integrated_filtered <- readRDS("../data/filtered_adj_fpkm_1828_smartseq_integ.RDS")
 
-# =========================================================== FindMarkers by treatments and seq method
-
-obj_integrated_filtered$cell.type.treatment.method <- paste(Idents(obj_integrated_filtered), obj_integrated_filtered$treatment, obj_integrated_filtered$seq.method, sep = "_")
-
-obj_integrated_filtered$cell.type.treatment.method
-
-Idents(obj_integrated_filtered) <- "cell.type.treatment.method"
-
-x <- FindMarkers(obj_integrated_filtered, ident.1 = "central-cells_1hr_smartseq2", ident.2 = "central-cells_homeo_smartseq2", verbose = TRUE)
-
-
+# =========================================================== FindMarkers by treatments and seq method  =================================================
 # =========================================================== Create Function for DGE table =================================================
 DGEtable <- function(seurat_obj, ident.1, ident.2) {
   gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
@@ -163,15 +153,56 @@ g <- ggplot(data=amp,
 
 
 for (i in 1:length(cluster.ident)){
+  #generate volcano plots for the smartseq2 data
+  #label genes that are upregulated
+  upreg.genes.to.label <- cluster.ident.list[[i]]$Gene.name.uniq[1:20]
+  #label genes that are downregulated
+  downreg.genes.to.label <- tail(cluster.ident.list[[i]]$Gene.name.uniq, 20)
+  
+  png(figurePath(paste0("volcanoplot.",cluster.ident[[i]],"smartseq2.png")), width = 11,
+      height = 9, units = "in", res = 200)
+  with(cluster.ident.list[[i]], plot(avg_logFC, -log10(p_val), pch=20, main=paste0("Analysis of Cluster: ", cluster.ident[[i]]), col = "grey"))
+  grid(NULL,NULL, lty = 6, col = "lightgrey") 
+  mtext("Volcano Plot - Smartseq2 Data", line = 0)
+  with(subset(cluster.ident.list[[i]] , p_val<.05), points(avg_logFC, -log10(p_val), pch=20,col="black")) #color significant genes
+  with(subset(cluster.ident.list[[i]], (avg_logFC)>1), points(avg_logFC, -log10(p_val), pch=20, col="green")) #color upregulated genes
+  with(subset(cluster.ident.list[[i]],(avg_logFC)<(1*-1)), points(avg_logFC, -log10(p_val), pch=20, col="red")) #color downregulated genes
+  #specify points to label - upreg
+  text(cluster.ident.list[[i]]$avg_logFC[1:20], -log10(cluster.ident.list[[i]]$p_val[1:20]),labels=upreg.genes.to.label)
+  #specify points to label - downreg
+  text(tail(cluster.ident.list[[i]]$avg_logFC, 20), -log10(tail(cluster.ident.list[[i]]$p_val, 20)), labels = downreg.genes.to.label)
+  dev.off()
+  
+  #generate volcano plots for the Sungmin's data
+  #label genes that are upregulated
+  upreg.genes.to.label <- sungmin.regen.cluster.ident.list[[i]]$Gene.name.uniq[1:20]
+  #label genes that are downregulated
+  downreg.genes.to.label <- tail(sungmin.regen.cluster.ident.list[[i]]$Gene.name.uniq, 20)
+  
+  png(figurePath(paste0("volcanoplot.",cluster.ident[[i]], ".sungmin.regen.png")), width = 11,
+      height = 9, units = "in", res = 200)
+  with(sungmin.regen.cluster.ident.list[[i]], plot(avg_logFC, -log10(p_val), pch=20, main=paste0("Analysis of Cluster: ", cluster.ident[[i]]), col = "grey"))
+  grid(NULL,NULL, lty = 6, col = "lightgrey") 
+  mtext("Volcano Plot - Sungmin's Regeneration Data", line = 0)
+  with(subset(sungmin.regen.cluster.ident.list[[i]] , p_val<.05), points(avg_logFC, -log10(p_val), pch=20,col="black")) #color significant genes
+  with(subset(sungmin.regen.cluster.ident.list[[i]], (avg_logFC)>1), points(avg_logFC, -log10(p_val), pch=20, col="green")) #color upregulated genes
+  with(subset(sungmin.regen.cluster.ident.list[[i]],(avg_logFC)<(1*-1)), points(avg_logFC, -log10(p_val), pch=20, col="red")) #color downregulated genes
+  #specify points to label - upreg
+  text(sungmin.regen.cluster.ident.list[[i]]$avg_logFC[1:20], -log10(sungmin.regen.cluster.ident.list[[i]]$p_val[1:20]),labels=upreg.genes.to.label)
+  #specify points to label - downreg
+  text(tail(sungmin.regen.cluster.ident.list[[i]]$avg_logFC, 20), -log10(tail(sungmin.regen.cluster.ident.list[[i]]$p_val, 20)), labels = downreg.genes.to.label)
+  dev.off()
   
 }
+
 #label genes that are upregulated
 upreg.genes.to.label <- amp$Gene.name.uniq[1:20]
 #label genes that are downregulated
 downreg.genes.to.label <- tail(amp$Gene.name.uniq, 20)
 
-with(amp, plot(avg_logFC, -log10(p_val), pch=20, main="Volcano plot", col = "grey"))
+with(amp, plot(avg_logFC, -log10(p_val), pch=20, main="Analysis of Cluster: ", col = "grey"))
 grid(NULL,NULL, lty = 6, col = "lightgrey") 
+mtext("Volcano Plot - Smartseq2 Data: ", line = 0)
 with(subset(amp , p_val<.05), points(avg_logFC, -log10(p_val), pch=20,col="black"))
 with(subset(amp, (avg_logFC)>1), points(avg_logFC, -log10(p_val), pch=20, col="green"))
 with(subset(amp,(avg_logFC)<(1*-1)), points(avg_logFC, -log10(p_val), pch=20, col="red"))

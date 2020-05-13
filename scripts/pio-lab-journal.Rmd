@@ -12,6 +12,7 @@ output:
 ```{r,workplace, message=FALSE, warning=FALSE, results='hide', echo=FALSE}
 knitr::opts_chunk$set(message = FALSE)
 knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(echo = FALSE)
 library(Seurat)
 # library(plotly)
 #install.packages("future")
@@ -578,7 +579,7 @@ ssh maple
 
 ![Annotations, PC 25](homeo_samples_integ_figures/annotated.clusters.png)
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, eval=FALSE}
 obj_integrated <- readRDS("../data/homeo_samples_integ.RDS")
 table(obj_integrated$data.set)
 table(Idents(obj_integrated), obj_integrated$data.set)
@@ -617,7 +618,7 @@ This content pertains to integration of smartseq2 and 4 homeostatic samples
 ![Annotations, PC 25](adj_fpkm_1828_smartseq_integ_figures/annotated.clusters.png)
 
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, eval=FALSE}
 obj_integrated_fpkm <- readRDS("../data/adj_fpkm_1828_smartseq_integ.RDS")
 table(obj_integrated_fpkm$data.set)
 table(Idents(obj_integrated_fpkm), obj_integrated_fpkm$data.set)
@@ -625,19 +626,107 @@ table(Idents(obj_integrated_fpkm), obj_integrated_fpkm$data.set)
 
 ## Week of May 11th - Filtering out non-specific clusters {.tabset}
 
-content
+* Removal of non-specific clusters
+
+* Re-clustering with modified PCA parameterization after removal of non-specific clusters
+
+* Differential gene expression will be analyzed based off the filtered seurat object
+
+![filtered, integrated umap](adj_fpkm_1828_smartseq_integ_figures/filtered.annotated.clusters.png)
+
 
 ## Week of May 11th - Differential Gene Expression b/t 1hr and Homeo Treatment {.tabset}
 
-content
+Here, we compare differential gene expression between the 1hr and the Homeo treatment with comparative analysis to Sungmin's regeneration shiny app.
 
-### Smartseq2 dataset {.tabset}
+### Amp-SCs {.tabset}
 
-content
+```{r}
+library(png)
+library(grid)
+library(gridExtra)
+img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.amp-SCs.sungmin.regen.png")), interpolate = FALSE)
+img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.amp-SCs.smartseq2.png")), interpolate = FALSE)
+grid.arrange(img1, img2, ncol = 2)
+```
 
-### Sungmin's Regen App (10X) {.tabset}
+### AP-cells {.tabset}
 
-content
+```{r}
+library(png)
+library(grid)
+library(gridExtra)
+img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.AP-cells.sungmin.regen.png")), interpolate = FALSE)
+img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.AP-cells.smartseq2.png")), interpolate = FALSE)
+grid.arrange(img1, img2, ncol = 2)
+```
+
+### DV-cells {.tabset}
+
+```{r}
+library(png)
+library(grid)
+library(gridExtra)
+img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.DV-cells.sungmin.regen.png")), interpolate = FALSE)
+img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.DV-cells.smartseq2.png")), interpolate = FALSE)
+grid.arrange(img1, img2, ncol = 2)
+```
+
+### early-HCs {.tabset}
+
+```{r}
+library(png)
+library(grid)
+library(gridExtra)
+img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.early-HCs.sungmin.regen.png")), interpolate = FALSE)
+img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.early-HCs.smartseq2.png")), interpolate = FALSE)
+grid.arrange(img1, img2, ncol = 2)
+```
+
+### HC-prog {.tabset}
+
+```{r}
+library(png)
+library(grid)
+library(gridExtra)
+img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.HC-prog.sungmin.regen.png")), interpolate = FALSE)
+img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.HC-prog.smartseq2.png")), interpolate = FALSE)
+grid.arrange(img1, img2, ncol = 2)
+```
+
+### Inm {.tabset}
+
+```{r}
+library(png)
+library(grid)
+library(gridExtra)
+img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.Inm.sungmin.regen.png")), interpolate = FALSE)
+img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.Inm.smartseq2.png")), interpolate = FALSE)
+grid.arrange(img1, img2, ncol = 2)
+```
+
+### mantle-cells {.tabset}
+
+```{r}
+library(png)
+library(grid)
+library(gridExtra)
+img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mantle-cells.sungmin.regen.png")), interpolate = FALSE)
+img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mantle-cells.smartseq2.png")), interpolate = FALSE)
+grid.arrange(img1, img2, ncol = 2)
+```
+
+### mature-HCs {.tabset}
+
+```{r}
+library(png)
+library(grid)
+library(gridExtra)
+img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mature-HCs.sungmin.regen.png")), interpolate = FALSE)
+img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mature-HCs.smartseq2.png")), interpolate = FALSE)
+grid.arrange(img1, img2, ncol = 2)
+```
+
 
 # {-}
 

@@ -77,7 +77,7 @@ names(cluster.ident.list) <- cluster.ident
 # =========================================================== Read in Sungmin's Regen App data  =================================================s
 setwd("../data/sungminregenappDGE/")
 
-file_list <- list.files(path="../sungminregenappDGE/")
+file_list <- list.files(path="../original_sungminregenappDGE/")
 
 sungmin.regen.cluster.ident.list <- vector("list", length = length(file_list))
 
@@ -87,6 +87,9 @@ for (i in 1:length(file_list)){
 }
 
 names(sungmin.regen.cluster.ident.list) <- gsub(".tsv", "", file_list)
+
+setwd("/home/ntran2/bgmp/pio-lab/scripts")
+
 
 # =========================================================== Merge smartseq and sungmin's regen DGE  =================================================s
 
@@ -159,7 +162,7 @@ for (i in 1:length(cluster.ident)){
   #label genes that are downregulated
   downreg.genes.to.label <- tail(cluster.ident.list[[i]]$Gene.name.uniq, 20)
   
-  png(figurePath(paste0("volcanoplot.",cluster.ident[[i]],"smartseq2.png")), width = 11,
+  png(figurePath(paste0("volcanoplot.",cluster.ident[[i]],".smartseq2.png")), width = 11,
       height = 9, units = "in", res = 200)
   with(cluster.ident.list[[i]], plot(avg_logFC, -log10(p_val), pch=20, main=paste0("Analysis of Cluster: ", cluster.ident[[i]]), col = "grey"))
   grid(NULL,NULL, lty = 6, col = "lightgrey") 
@@ -211,5 +214,15 @@ text(amp$avg_logFC[1:20], -log10(amp$p_val[1:20]),labels=upreg.genes.to.label)
 #specify points to label - downreg
 text(tail(amp$avg_logFC, 20), -log10(tail(amp$p_val, 20)), labels = downreg.genes.to.label)
 
+with(sungmin.regen.cluster.ident.list$`amp-SCs`, plot(avg_logFC, -log10(p_val), pch=20, main=paste0("Analysis of Cluster: amp-SCs"), col = "grey"))
+grid(NULL,NULL, lty = 6, col = "lightgrey") 
+mtext("Volcano Plot - Sungmin's Regeneration Data", line = 0)
+with(subset(sungmin.regen.cluster.ident.list$`amp-SCs` , p_val<.05), points(avg_logFC, -log10(p_val), pch=20,col="black")) #color significant genes
+with(subset(sungmin.regen.cluster.ident.list$`amp-SCs`, (avg_logFC)>1), points(avg_logFC, -log10(p_val), pch=20, col="green")) #color upregulated genes
+with(subset(sungmin.regen.cluster.ident.list$`amp-SCs`,(avg_logFC)<(1*-1)), points(avg_logFC, -log10(p_val), pch=20, col="red")) #color downregulated genes
+#specify points to label - upreg
+text(sungmin.regen.cluster.ident.list[[i]]$avg_logFC[1:20], -log10(sungmin.regen.cluster.ident.list[[i]]$p_val[1:20]),labels=upreg.genes.to.label)
+#specify points to label - downreg
+text(tail(sungmin.regen.cluster.ident.list$`amp-SCs`$avg_logFC, 20), -log10(tail(sungmin.regen.cluster.ident.list$`amp-SCs`$p_val, 20)), labels = downreg.genes.to.label)
 
-
+save.image("../data/integ_DGE.RData")

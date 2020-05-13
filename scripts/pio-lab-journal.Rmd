@@ -23,11 +23,8 @@ library(cowplot)
 # library(ggrepel)
 library(ggrepel)
 
-library(knitr)
-library(kableExtra)
-#load("../data/pre_integrated_SeurObj.RData")
 
-setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
+#setwd("scripts")
 ```
 
 ######## Objective:
@@ -39,8 +36,7 @@ setwd("/Volumes/easystore/SIMR_2019/pio-lab/scripts")
 
 # Results {.tabset .tabset-pills}
 
-## Week of April 6th {.tabset
-}
+## Week of April 6th {.tabset}
 We will discuss results here
 
 ######## Create Seurat Object for 10X homeo data, preprocesssing, QC filtering
@@ -179,11 +175,11 @@ Top10GeneCellIdentity <- function(marker.list, df){
 
 Use excel sheet for Lush (2019) suppl file 9 for list of hair cells in their young, mature, prog stages
 
-![Robust Marker Feature Plots](/Volumes/easystore/SIMR_2019/pio-lab/scripts/isl1_sib_counts_10X_figures/common_features.png)
+![Robust Marker Feature Plots](isl1_sib_counts_10X_figures/common_features.png)
 
 ################ Renamed Cluster Identity
 
-![Renamed Cluster Umap](/Volumes/easystore/SIMR_2019/pio-lab/scripts/isl1_sib_counts_10X_figures/annotated_umap_clusters.png)
+![Renamed Cluster Umap](isl1_sib_counts_10X_figures/annotated_umap_clusters.png)
 
 
 Note: Tiny clusters with -pos suffix indicate markers that have a high expression for that cluster.
@@ -258,9 +254,9 @@ checking for empty cell in rownames(fpkm_matrix)
 error resolved, can proceed with integration
 
 **fpkm smartseq umap**
-![old Integrated Cluster Umap](/Users/GioiTran/Downloads/oldumap.png)
+![old Integrated Cluster Umap](fpkm_matrix_1828_figures/oldumap.png)
 
-![old identity Integrated Cluster Umap](/Users/GioiTran/Downloads/oldumapident.png)
+![old identity Integrated Cluster Umap](fpkm_matrix_1828_figures/oldumapident.png)
 Note:
 
 * ```FindVariableFeatures()``` and ```NormalizeData()``` is performed on the integrated object list, not on the original seurat object itself
@@ -270,16 +266,16 @@ Note:
 
 ```Integrating data|++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=57s  Warning: Adding a command log without an assay associated with it```
 
-![Integrated Cluster Umap](/Volumes/easystore/SIMR_2019/pio-lab/scripts/fpkm_matrix_1828_figures/integrated_by_trt.png)
+![Integrated Cluster Umap](fpkm_matrix_1828_figures/integrated_by_trt.png)
 
 
-![Integrated Cluster Umap](/Volumes/easystore/SIMR_2019/pio-lab/scripts/fpkm_matrix_1828_figures/integrated_by_dataset.png)
-![Integrated Cluster Umap](/Volumes/easystore/SIMR_2019/pio-lab/scripts/fpkm_matrix_1828_figures/common_features.png)
+![Integrated Cluster Umap](fpkm_matrix_1828_figures/integrated_by_dataset.png)
+![Integrated Cluster Umap](fpkm_matrix_1828_figures/common_features.png)
 
 Sost and wnt2 is still weakly defining the DV Pole
 
 
-![Integrated Cluster Umap](/Volumes/easystore/SIMR_2019/pio-lab/scripts/fpkm_matrix_1828_figures/integrated_umap_unlabelled.png)
+![Integrated Cluster Umap](fpkm_matrix_1828_figures/integrated_umap_unlabelled.png)
 
 
 ```
@@ -310,12 +306,12 @@ Resolved by implementing the following:
 kable(head(read.table(file = '../data/central.dge.df.tsv', sep = '\t', header = T),10))
 ```
 
-![Central Cells TOP DGE ViolinPlot](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/central.dge.vln.png)
+![Central Cells TOP DGE ViolinPlot](integ_DGE_figures/central.dge.vln.png)
 
-![Central Cells TOP DGE RidgePlot](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/central.dge.ridge.png)
+![Central Cells TOP DGE RidgePlot](integ_DGE_figures/central.dge.ridge.png)
 
 
-![Central Cells TOP DGE DotPlot](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/central.dge.dotplt.png)
+![Central Cells TOP DGE DotPlot](integ_DGE_figures/central.dge.dotplt.png)
 
 ######## Weekly Meeting To-Do List April 22:
 
@@ -462,7 +458,7 @@ However, checksum bytes from Maple server --> local MacOS is different
 ```08ca396c8e2b42c95466e8b132915ac5  L34727_S1_L001_R2_001.fastq.gz``` from Stower's portal is different from ```17a74db49a6870cb408fae734411b141  L34727_S1_L001_R2_001.fastq.gz``` once downloaded onto local computer
 Concludes that downloading files from Stower's portal is not as stable as logging in with ssh external access
 
-## Week of April 27th
+## Week of April 27th {.tabset}
 
 Sample L29314 pulled from ```/n/analysis/Piotrowski/heb/MOLNG-2047/HLC2NBCXY/L29314```
 
@@ -522,21 +518,21 @@ Roughly ~600 more cells with new assay compared to the original
 Regressing out nCount_RNA
 Centering and scaling data matrix```
 
-![Adj homeo 10X data w/ vars.toregress=nCount, new subset, PC10](/Volumes/easystore/SIMR_2019/pio-lab/scripts/adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC10.png)
+![Adj homeo 10X data w/ vars.toregress=nCount, new subset, PC10](adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC10.png)
 
-![Adj homeo 10X data w/ vars.toregress=nCount, new subset, PC15](/Volumes/easystore/SIMR_2019/pio-lab/scripts/adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC15.png)
+![Adj homeo 10X data w/ vars.toregress=nCount, new subset, PC15](adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC15.png)
 
-![Adj homeo 10X data w/ vars.toregress=nCount, new subset, P20](/Volumes/easystore/SIMR_2019/pio-lab/scripts/adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC20.png)
+![Adj homeo 10X data w/ vars.toregress=nCount, new subset, P20](adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC20.png)
 
-![Adj homeo 10X data w/ vars.toregress=nCount, new subset, PC25](/Volumes/easystore/SIMR_2019/pio-lab/scripts/adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC25.png)
+![Adj homeo 10X data w/ vars.toregress=nCount, new subset, PC25](adj_isl1_sib_counts_10X_figures/DV.AP.AMP_featuresPC25.png)
 
 Conclusion: despite reparameterizing to regress the UMI variation during the scaling step, we see that the DV poles are still weakly defined at each incremental PC (10-25). 
 
 ######### Assessing UMI Abundance
-![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/UMIAbundance.png)
+![UMI Abundance between 10X and SmartSeq](integ_DGE_figures/UMIAbundance.png)
 
-![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/hist-10X.png)
-![UMI Abundance between 10X and SmartSeq](/Volumes/easystore/SIMR_2019/pio-lab/scripts/integ_DGE_figures/hist-smartseq2.png)
+![UMI Abundance between 10X and SmartSeq](integ_DGE_figures/hist-10X.png)
+![UMI Abundance between 10X and SmartSeq](integ_DGE_figures/hist-smartseq2.png)
 
 ######## Setting up ssh tunnel
 
@@ -584,7 +580,9 @@ ssh maple
 
 ```{r, echo=FALSE}
 obj_integrated <- readRDS("../data/homeo_samples_integ.RDS")
-table(obj)
+table(obj_integrated$data.set)
+table(Idents(obj_integrated), obj_integrated$data.set)
+
 ```
 
 ## Week May 4th - Integration of Homeostatic Samples and Smartseq2 Sample {.tabset}
@@ -617,6 +615,29 @@ This content pertains to integration of smartseq2 and 4 homeostatic samples
 ![Common Features, PC25](adj_fpkm_1828_smartseq_integ_figures/common_features.PC25.png)
 
 ![Annotations, PC 25](adj_fpkm_1828_smartseq_integ_figures/annotated.clusters.png)
+
+
+```{r, echo=FALSE}
+obj_integrated_fpkm <- readRDS("../data/adj_fpkm_1828_smartseq_integ.RDS")
+table(obj_integrated_fpkm$data.set)
+table(Idents(obj_integrated_fpkm), obj_integrated_fpkm$data.set)
+```
+
+## Week of May 11th - Filtering out non-specific clusters {.tabset}
+
+content
+
+## Week of May 11th - Differential Gene Expression b/t 1hr and Homeo Treatment {.tabset}
+
+content
+
+### Smartseq2 dataset {.tabset}
+
+content
+
+### Sungmin's Regen App (10X) {.tabset}
+
+content
 
 # {-}
 

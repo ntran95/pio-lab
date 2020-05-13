@@ -23,6 +23,7 @@ library(cowplot)
 # library(gridExtra)
 # library(ggrepel)
 library(ggrepel)
+library(DT)
 
 
 #setwd("scripts")
@@ -645,9 +646,14 @@ Here, we compare differential gene expression between the 1hr and the Homeo trea
 library(png)
 library(grid)
 library(gridExtra)
+
+load("../data/integ_DGE.RData")
 img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.amp-SCs.sungmin.regen.png")), interpolate = FALSE)
 img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.amp-SCs.smartseq2.png")), interpolate = FALSE)
 grid.arrange(img1, img2, ncol = 2)
+
+datatable(merged.data$`amp-SCs`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
+
 ```
 
 ### AP-cells {.tabset}
@@ -659,7 +665,23 @@ library(gridExtra)
 img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.AP-cells.sungmin.regen.png")), interpolate = FALSE)
 img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.AP-cells.smartseq2.png")), interpolate = FALSE)
 grid.arrange(img1, img2, ncol = 2)
+
+datatable(merged.data$`AP-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
+
+### Central-cells {.tabset}
+
+```{r}
+library(png)
+library(grid)
+library(gridExtra)
+img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.central-cells.sungmin.regen.png")), interpolate = FALSE)
+img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.central-cells.smartseq2.png")), interpolate = FALSE)
+grid.arrange(img1, img2, ncol = 2)
+
+  datatable(merged.data$`central-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
+```
+
 
 ### DV-cells {.tabset}
 
@@ -670,6 +692,8 @@ library(gridExtra)
 img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.DV-cells.sungmin.regen.png")), interpolate = FALSE)
 img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.DV-cells.smartseq2.png")), interpolate = FALSE)
 grid.arrange(img1, img2, ncol = 2)
+
+  datatable(merged.data$`DV-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### early-HCs {.tabset}
@@ -681,6 +705,8 @@ library(gridExtra)
 img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.early-HCs.sungmin.regen.png")), interpolate = FALSE)
 img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.early-HCs.smartseq2.png")), interpolate = FALSE)
 grid.arrange(img1, img2, ncol = 2)
+
+datatable(merged.data$`early-HCs`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### HC-prog {.tabset}
@@ -692,6 +718,8 @@ library(gridExtra)
 img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.HC-prog.sungmin.regen.png")), interpolate = FALSE)
 img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.HC-prog.smartseq2.png")), interpolate = FALSE)
 grid.arrange(img1, img2, ncol = 2)
+
+datatable(merged.data$`HC-prog`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### Inm {.tabset}
@@ -703,6 +731,8 @@ library(gridExtra)
 img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.Inm.sungmin.regen.png")), interpolate = FALSE)
 img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.Inm.smartseq2.png")), interpolate = FALSE)
 grid.arrange(img1, img2, ncol = 2)
+
+datatable(merged.data$Inm, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### mantle-cells {.tabset}
@@ -714,6 +744,8 @@ library(gridExtra)
 img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mantle-cells.sungmin.regen.png")), interpolate = FALSE)
 img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mantle-cells.smartseq2.png")), interpolate = FALSE)
 grid.arrange(img1, img2, ncol = 2)
+
+datatable(merged.data$`mantle-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### mature-HCs {.tabset}
@@ -725,6 +757,8 @@ library(gridExtra)
 img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mature-HCs.sungmin.regen.png")), interpolate = FALSE)
 img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mature-HCs.smartseq2.png")), interpolate = FALSE)
 grid.arrange(img1, img2, ncol = 2)
+
+datatable(merged.data$`mature-HCs`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 

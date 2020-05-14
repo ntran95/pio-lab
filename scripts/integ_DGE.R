@@ -10,7 +10,8 @@ library(cowplot)
 library(ggrepel)
 library(stringr)
 library(ggrepel)
-#library(patchwork)
+library(readxl)
+library(writexl)
 options(future.globals.maxSize = 5000 * 1024^2)
 
 
@@ -22,16 +23,28 @@ if (TRUE) {
   script_name <- "integ_DGE"
   
   figurePath <- function(filename, format){paste0(script_name, "_figures/", filename)}
-  
-  #devtools::load_all("/n/projects/ddiaz/Analysis/Scripts/SeuratExtensions")
 }
 
 # =========================================================== Load filtered integ smartseq and homeo object =================================================
 
 obj_integrated_filtered <- readRDS("../data/filtered_adj_fpkm_1828_smartseq_integ.RDS")
 
-# =========================================================== FindMarkers by treatments and seq method  =================================================
+# =========================================================== Test FindMarkers by treatments and seq method  =================================================
+DefaultAssay(obj_integrated_filtered) <- "RNA"
+obj_integrated_filtered$cell.type.treatment.method <- paste(Idents(obj_integrated_filtered), obj_integrated_filtered$treatment, obj_integrated_filtered$seq.method, sep = "_")
+obj_integrated_filtered$cell.type.treatment.method
+Idents(obj_integrated_filtered) <- "cell.type.treatment.method"
+x <- FindMarkers(obj_integrated_filtered, ident.1 = "central-cells_1hr_smartseq2", ident.2 = "central-cells_homeo_smartseq2", verbose = TRUE)
+x$Gene.name.uniq <- rownames(x)
+#merge gene table with all markers generated based on uniq gene symbol
+x <- merge(x, gene_table, by = "Gene.name.uniq") 
+#reorder df in ascending order based on avg_logFC (col#3)
+x <- x[order( x[,3], decreasing = TRUE),]
+
+
 # =========================================================== Create Function for DGE table =================================================
+#this function automates the findmarkers() by treatment and seqmethod for each cluster identity (like the section above) and returns the 
+#df in a list. The seurat object is modified in function however does not affect the object outside the environment
 DGEtable <- function(seurat_obj, ident.1, ident.2) {
   gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
   #ensure that the default assay is switched to "RNA" prior to DGE analysis
@@ -140,21 +153,6 @@ names(conserved.smrtseq) <- cluster.ident
 
 # =========================================================== Volcano Plot  =================================================s
 
-amp$threshold <- as.factor(amp$p_val.smrtseq2 < 0.05)
-
-g <- ggplot(data=amp, 
-             aes(x=avg_logFC.smrtseq2, y =-log(p_val.smrtseq2), 
-                 colour=threshold)) +
-  geom_point(alpha=0.7, size=1.75) +
-  #xlim(c(-3, 3)) +
-  xlab("log2 fold change") + ylab("-log10 p-value") +
-  theme(legend.position = "right",
-         plot.title = element_text(size = rel(1.5), hjust = 0.5),
-         axis.title = element_text(size = rel(1.25))) + theme_bw() +
-  ggtitle("Cluster: ")
-
-
-
 for (i in 1:length(cluster.ident)){
   #generate volcano plots for the smartseq2 data
   #label genes that are upregulated
@@ -166,7 +164,7 @@ for (i in 1:length(cluster.ident)){
       height = 9, units = "in", res = 200)
   with(cluster.ident.list[[i]], plot(avg_logFC, -log10(p_val), pch=20, main=paste0("Analysis of Cluster: ", cluster.ident[[i]]), col = "grey"))
   grid(NULL,NULL, lty = 6, col = "lightgrey") 
-  mtext("Volcano Plot - Smartseq2 Data", line = 0)
+  mtext("Volcano Plot - Smartseq2 Data -1hrVShomeo", line = 0)
   with(subset(cluster.ident.list[[i]] , p_val<.05), points(avg_logFC, -log10(p_val), pch=20,col="black")) #color significant genes
   with(subset(cluster.ident.list[[i]], (avg_logFC)>1), points(avg_logFC, -log10(p_val), pch=20, col="green")) #color upregulated genes
   with(subset(cluster.ident.list[[i]],(avg_logFC)<(1*-1)), points(avg_logFC, -log10(p_val), pch=20, col="red")) #color downregulated genes
@@ -186,7 +184,7 @@ for (i in 1:length(cluster.ident)){
       height = 9, units = "in", res = 200)
   with(sungmin.regen.cluster.ident.list[[i]], plot(avg_logFC, -log10(p_val), pch=20, main=paste0("Analysis of Cluster: ", cluster.ident[[i]]), col = "grey"))
   grid(NULL,NULL, lty = 6, col = "lightgrey") 
-  mtext("Volcano Plot - Sungmin's Regeneration Data", line = 0)
+  mtext("Volcano Plot - Sungmin's Regeneration Data - 1hrVShomeo", line = 0)
   with(subset(sungmin.regen.cluster.ident.list[[i]] , p_val<.05), points(avg_logFC, -log10(p_val), pch=20,col="black")) #color significant genes
   with(subset(sungmin.regen.cluster.ident.list[[i]], (avg_logFC)>1), points(avg_logFC, -log10(p_val), pch=20, col="green")) #color upregulated genes
   with(subset(sungmin.regen.cluster.ident.list[[i]],(avg_logFC)<(1*-1)), points(avg_logFC, -log10(p_val), pch=20, col="red")) #color downregulated genes
@@ -213,6 +211,15 @@ with(subset(amp,(avg_logFC)<(1*-1)), points(avg_logFC, -log10(p_val), pch=20, co
 text(amp$avg_logFC[1:20], -log10(amp$p_val[1:20]),labels=upreg.genes.to.label)
 #specify points to label - downreg
 text(tail(amp$avg_logFC, 20), -log10(tail(amp$p_val, 20)), labels = downreg.genes.to.label)
+legend("bottomleft", legend = c("upreg", "downreg", "not sig"),
+       col = c("green","red", "grey"), pch = 19,
+       bty = "n", 
+       pt.cex = 2, 
+       cex = .5, 
+       text.col = "black", 
+       horiz = F , 
+       inset = c(0.1, 0.1))
+
 
 with(sungmin.regen.cluster.ident.list$`amp-SCs`, plot(avg_logFC, -log10(p_val), pch=20, main=paste0("Analysis of Cluster: amp-SCs"), col = "grey"))
 grid(NULL,NULL, lty = 6, col = "lightgrey") 
@@ -224,5 +231,28 @@ with(subset(sungmin.regen.cluster.ident.list$`amp-SCs`,(avg_logFC)<(1*-1)), poin
 text(sungmin.regen.cluster.ident.list[[i]]$avg_logFC[1:20], -log10(sungmin.regen.cluster.ident.list[[i]]$p_val[1:20]),labels=upreg.genes.to.label)
 #specify points to label - downreg
 text(tail(sungmin.regen.cluster.ident.list$`amp-SCs`$avg_logFC, 20), -log10(tail(sungmin.regen.cluster.ident.list$`amp-SCs`$p_val, 20)), labels = downreg.genes.to.label)
+legend("bottomleft", legend = c("upreg", "downreg", "not sig"),
+       col = c("green","red", "grey"), pch = 19,
+       bty = "n", 
+       pt.cex = 2, 
+       cex = 1.2, 
+       text.col = "black", 
+       horiz = F , 
+       inset = c(0.1, 0.1))
 
 save.image("../data/integ_DGE.RData")
+save(merged.data, file = "../data/integ_DGE.RDS")
+
+
+# =========================================================== export  =================================================s
+#creates a single excel file with multiple sheets/tabs pertaining to DGE analysis based on cluster IDs
+write_xlsx(list("amp-SCs" = merged.data$`amp-SCs`,
+                "AP-cells" = merged.data$`AP-cells`,
+                "central-cells" = merged.data$`central-cells`,
+                "DV-cells" = merged.data$`DV-cells`,
+                "early-HCs" = merged.data$`early-HCs`,
+                "HC-prog" = merged.data$`HC-prog`,
+                "Inm" = merged.data$Inm,
+                "mantle-cells" = merged.data$`mantle-cells`,
+                "mature-HCs" = merged.data$`mature-HCs`), path = "../data/integ_DGE/exported_files/IDGE-smrtseqVsungminregen-1hrVhomeo.xlsx")
+

@@ -3,9 +3,9 @@
 /data/*.RData 
 /data/*.tsv 
 /data/*.txt 
-scripts/isl1_sib_counts_10X_figures/._* 
-scripts/pio-lab-journal.html
-scripts/pio-lab-journal_*/
-scripts/.Rhistory
-scripts/.RDataTmp
+/scripts/isl1_sib_counts_10X_figures/._* 
+/scripts/pio-lab-journal.html
+/scripts/pio-lab-journal_*/
+/scripts/.RHistory
+/scripts/.RDataTmp
 

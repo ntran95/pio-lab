@@ -64,14 +64,14 @@ if (DefaultAssay(mphg_homeo) == "integrated"){
   #check if scaled data is empty, if TRUE, scale data
   if(all(is.na(mphg_homeo[["RNA"]]@scale.data)) == "TRUE"){
     print("current object not scaled, scaling now")
-    mphg_homeo <- ScaleData(mphg_homeo)
+    mphg_homeo <- ScaleData(mphg_homeo, features = rownames(mphg_homeo))
   }
 }
 
 mphg_homeo <- RunPCA(mphg_homeo, npcs = 100, verbose = TRUE, features = NULL)
-mphg_homeo <- FindNeighbors(mphg_homeo, dims = 1:15, verbose = TRUE)
+mphg_homeo <- FindNeighbors(mphg_homeo, dims = 1:20, verbose = TRUE)
 mphg_homeo <- FindClusters(mphg_homeo, resolution = .8, verbose = TRUE)
-mphg_homeo <- RunUMAP(mphg_homeo, reduction = "pca", dims = 1:15, verbose = TRUE)
+mphg_homeo <- RunUMAP(mphg_homeo, reduction = "pca", dims = 1:20, verbose = TRUE)
 
 DimPlot(mphg_homeo)
 
@@ -94,15 +94,17 @@ names(cluster.ident.list) <- cluster.ident
 
 cluster.ident.list
 
+# =========================================================== non-specific clusters ===========================================================
+
 
 #desired unlabelled clusters passed through 
-pos_list <- c(14, 15)
+pos_list <- c(14, 16)
 pos_clusters <- vector(mode = "list", length = length(pos_list))
 gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
 
 for (x in 1:length(pos_list)){
   print(paste0("finding markers for cluster: ", pos_list[x]))
-  pos_clusters[[x]] <- FindMarkers(mphg_homeo, ident.1 = pos_list[x], only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE)
+  pos_clusters[[x]] <- FindMarkers(mphg_homeo, ident.1 = pos_list[x], verbose = TRUE)
   print(pos_clusters[[x]])
   pos_clusters[[x]]["Gene.name.uniq"] <- row.names(pos_clusters[[x]])
   pos_clusters[[x]] <- merge(pos_clusters[[x]], gene_table, by = "Gene.name.uniq")
@@ -115,8 +117,9 @@ pos_clusters$`cluster_ 10`
 # =========================================================== Rename filtered integ clusters  ===========================================================
 
 colnames(meta)
-cells <- list("mcamb" = 2, "rbp4" = 11, "fabp3" = 3, "f13a1b" = 0, "tspan10" = 1, "eomesa" = 12, "pcna" = c(6,9), "cldnh" =8, 
-              "irg1" = 7,"runx3" = 4,"spock3" = 13, "mpx" = 5, "gata3" = 12, "stat1b" = 10, "14" = 14, "15" = 15)
+cells <- list("mcamb" = 3, "rbp4" = 11, "fabp3" = 2, "f13a1b" = 0, "tspan10" = 1, "eomesa" = 13, "pcna" = c(6,10), 
+              "cldnh" =9, 
+              "irg1" = 7,"runx3" = 4,"spock3" = 12, "mpx" = 5, "gata3" = 15, "stat1b" = 8, "krt4" = 14, "hmgn2" = 16)
 meta$homeo.cell.type.ident <- factor(rep("", nrow(meta)),
                                        levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {
@@ -130,13 +133,13 @@ png(figurePath(paste0("annotated.umap.png"))
 DimPlot(mphg_homeo, label = TRUE) + NoLegend()
 dev.off()
 
-all.markers <- FindAllMarkers(mphg_homeo, logfc.threshold = 0.10)
+all.markers <- FindAllMarkers(mphg_homeo)
 
 # =========================================================== Rename filtered integ clusters  ===========================================================
 
 png(figurePath(paste0("annotated.umap.png"))
     ,width = 11, height = 9, units = "in", res = 300)
-DimPlot(mphg_homeo, label = TRUE, group.by = c("cell.type.ident", "homeo.cell.type.ident")) + NoLegend()
+DimPlot(mphg_homeo, label = TRUE) + NoLegend()
 dev.off()
 
 library(RColorBrewer)
@@ -153,3 +156,43 @@ png(figurePath(paste0("old.cluster.ident.png"))
 DimPlot(mphg_homeo, reduction = "umap", pt.size = 0.20,
          label = TRUE, label.size = 4, group.by   = "cell.type.ident", cols = gg_color_hue(16)) 
 dev.off()
+
+# =========================================================== Generate Heatmaps  ===========================================================
+
+top100 <- all.markers %>% group_by(cluster) %>% top_n(n = 100, wt = avg_logFC)
+DoHeatmap(mphg_homeo, features = top100$gene) + NoLegend()
+
+
+homeo.cluster.ident <- strsplit(unique(as.character(meta$homeo.cell.type.ident)), split = "[][']|,\\s*")
+homeo.cluster.list <- vector(mode = "list", length = length(homeo.cluster.ident))
+top100_list <- vector(mode = "list", length = length(homeo.cluster.ident))
+gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
+
+for (x in 1:length(homeo.cluster.ident)){
+  print(paste0("finding markers for cluster: ", homeo.cluster.ident[x]))
+  homeo.cluster.list[[x]] <- FindMarkers(mphg_homeo, ident.1 = homeo.cluster.ident[x], only.pos = FALSE, verbose = TRUE)
+  print(homeo.cluster.list[[x]])
+  homeo.cluster.list[[x]]["Gene.name.uniq"] <- row.names(homeo.cluster.list[[x]])
+  homeo.cluster.list[[x]] <- merge(homeo.cluster.list[[x]], gene_table, by = "Gene.name.uniq", sort = FALSE)
+  #sort by desc order of avg-logFC
+  homeo.cluster.list[[x]] <- homeo.cluster.list[[x]][order( homeo.cluster.list[[x]][,3], decreasing = TRUE),]
+  #write.table(homeo.cluster.list[[x]], file = figurePath(paste0(homeo.cluster.list[[x]], "tsv")), sep = "\t", row.names = F)
+  print(paste0("finding top 100 genes for cluster: ", homeo.cluster.ident[x]))
+  top100_list[[x]] <- homeo.cluster.list[[x]] %>% top_n(n = 100, wt = avg_logFC)
+  png(figurePath(paste0("heatmap.", homeo.cluster.ident[[x]], ".png"))
+      ,width = 15, height = 25, units = "in", res = 300)
+  print(DoHeatmap(mphg_homeo, features = top100_list[[x]]$Gene.name.uniq) + NoLegend())
+  dev.off()
+}
+
+names(homeo.cluster.list) <- paste(homeo.cluster.ident)
+names(top100_list) <- paste(homeo.cluster.ident)
+
+homeo.cluster.list$mcamb %>% group_by(Gene.name.uniq) %>% top_n(n = 100, wt = avg_logFC)
+
+top100_list$`top100_ mcamb`
+
+x <-homeo.cluster.list$mcamb[order( homeo.cluster.list$mcamb[,3], decreasing = TRUE),]
+
+x %>% top_n(n = 100, wt = avg_logFC)
+x[order( x[,3], decreasing = TRUE),]

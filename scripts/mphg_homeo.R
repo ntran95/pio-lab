@@ -68,3 +68,64 @@ if (DefaultAssay(mphg_homeo) == "integrated"){
   }
 }
 
+mphg_homeo <- RunPCA(mphg_homeo, npcs = 100, verbose = TRUE, features = NULL)
+mphg_homeo <- FindNeighbors(mphg_homeo, dims = 1:20, verbose = TRUE)
+mphg_homeo <- FindClusters(mphg_homeo, resolution = .6, verbose = TRUE)
+mphg_homeo <- RunUMAP(mphg_homeo, reduction = "pca", dims = 1:20, verbose = TRUE)
+
+DimPlot(mphg_homeo)
+
+# =========================================================== annotation ===========================================================
+meta <- mphg_homeo@meta.data
+
+#split the cell cluster idents extracted from metadata into a uniquely named list
+cluster.ident <- strsplit(unique(as.character(meta$cell.type.ident)), split = "[][']|,\\s*")
+
+#create empty list to store counts of cells to cluster idents
+cluster.ident.list <- vector("list", length = length(cluster.ident))
+
+#loop through the cell type ident, match it with the ident from the metadata, tally up the numberof cells expressed in that cluster
+for (i in 1:length(cluster.ident)){
+  cluster.ident.list[[i]] <- meta %>% filter(cell.type.ident == cluster.ident[[i]]) %>% count(seurat_clusters, sort =TRUE)
+  print(cluster.ident[[i]])
+}
+
+names(cluster.ident.list) <- cluster.ident
+
+cluster.ident.list$mcamb
+
+
+#desired unlabelled clusters passed through 
+pos_list <- c(14, 15)
+pos_clusters <- vector(mode = "list", length = length(pos_list))
+gene_table <- read.table("../data/Danio_Features_unique_Ens98_v1.tsv", sep = "\t", header = TRUE)
+
+for (x in 1:length(pos_list)){
+  print(paste0("finding markers for cluster: ", pos_list[x]))
+  pos_clusters[[x]] <- FindMarkers(mphg_homeo, ident.1 = pos_list[x], only.pos = FALSE, min.pct = 0.10, logfc.threshold = 0.10, verbose = TRUE)
+  print(pos_clusters[[x]])
+  pos_clusters[[x]]["Gene.name.uniq"] <- row.names(pos_clusters[[x]])
+  pos_clusters[[x]] <- merge(pos_clusters[[x]], gene_table, by = "Gene.name.uniq")
+}
+
+names(pos_clusters) <- paste("cluster_", pos_list)
+pos_clusters$`cluster_ 10`
+
+
+# =========================================================== Rename filtered integ clusters  ===========================================================
+
+colnames(meta)
+cells <- list("mcamb" = 2, "rbp4" = 10, "fabp3" = 3, "f13a1b" = 0, "tspan10" = 1, "eomesa" = 12, "pcna" = c(6,9), "cldnh" =8, 
+              "irg1" = 7,"runx3" = 4,"spock3" = 11, "mpx" = 5, "gata3" = 13, "stat1b" = 13)
+meta$cell.type.ident <- factor(rep("", nrow(meta)),
+                                       levels = names(cells), ordered = TRUE)
+for (i in 1:length(cells)) {
+  meta$cell.type.ident[meta$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
+}
+mphg_homeo@meta.data <- meta
+Idents(mphg_homeo) <- mphg_homeo@meta.data$cell.type.ident
+
+
+DimPlot(mphg_homeo, label = TRUE) + NoLegend()
+
+all.markers <- FindAllMarkers(mphg_homeo, logfc.threshold = 0.10)

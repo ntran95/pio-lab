@@ -69,9 +69,9 @@ if (DefaultAssay(mphg_homeo) == "integrated"){
 }
 
 mphg_homeo <- RunPCA(mphg_homeo, npcs = 100, verbose = TRUE, features = NULL)
-mphg_homeo <- FindNeighbors(mphg_homeo, dims = 1:20, verbose = TRUE)
-mphg_homeo <- FindClusters(mphg_homeo, resolution = .6, verbose = TRUE)
-mphg_homeo <- RunUMAP(mphg_homeo, reduction = "pca", dims = 1:20, verbose = TRUE)
+mphg_homeo <- FindNeighbors(mphg_homeo, dims = 1:15, verbose = TRUE)
+mphg_homeo <- FindClusters(mphg_homeo, resolution = .8, verbose = TRUE)
+mphg_homeo <- RunUMAP(mphg_homeo, reduction = "pca", dims = 1:15, verbose = TRUE)
 
 DimPlot(mphg_homeo)
 
@@ -92,7 +92,7 @@ for (i in 1:length(cluster.ident)){
 
 names(cluster.ident.list) <- cluster.ident
 
-cluster.ident.list$mcamb
+cluster.ident.list
 
 
 #desired unlabelled clusters passed through 
@@ -115,17 +115,41 @@ pos_clusters$`cluster_ 10`
 # =========================================================== Rename filtered integ clusters  ===========================================================
 
 colnames(meta)
-cells <- list("mcamb" = 2, "rbp4" = 10, "fabp3" = 3, "f13a1b" = 0, "tspan10" = 1, "eomesa" = 12, "pcna" = c(6,9), "cldnh" =8, 
-              "irg1" = 7,"runx3" = 4,"spock3" = 11, "mpx" = 5, "gata3" = 13, "stat1b" = 13)
-meta$cell.type.ident <- factor(rep("", nrow(meta)),
+cells <- list("mcamb" = 2, "rbp4" = 11, "fabp3" = 3, "f13a1b" = 0, "tspan10" = 1, "eomesa" = 12, "pcna" = c(6,9), "cldnh" =8, 
+              "irg1" = 7,"runx3" = 4,"spock3" = 13, "mpx" = 5, "gata3" = 12, "stat1b" = 10, "14" = 14, "15" = 15)
+meta$homeo.cell.type.ident <- factor(rep("", nrow(meta)),
                                        levels = names(cells), ordered = TRUE)
 for (i in 1:length(cells)) {
-  meta$cell.type.ident[meta$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
+  meta$homeo.cell.type.ident[meta$seurat_clusters %in% cells[[i]]] <- names(cells)[i]
 }
 mphg_homeo@meta.data <- meta
-Idents(mphg_homeo) <- mphg_homeo@meta.data$cell.type.ident
+Idents(mphg_homeo) <- mphg_homeo@meta.data$homeo.cell.type.ident
 
-
+png(figurePath(paste0("annotated.umap.png"))
+    ,width = 11, height = 9, units = "in", res = 300)
 DimPlot(mphg_homeo, label = TRUE) + NoLegend()
+dev.off()
 
 all.markers <- FindAllMarkers(mphg_homeo, logfc.threshold = 0.10)
+
+# =========================================================== Rename filtered integ clusters  ===========================================================
+
+png(figurePath(paste0("annotated.umap.png"))
+    ,width = 11, height = 9, units = "in", res = 300)
+DimPlot(mphg_homeo, label = TRUE, group.by = c("cell.type.ident", "homeo.cell.type.ident")) + NoLegend()
+dev.off()
+
+library(RColorBrewer)
+
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+gg_color_hue(integer_with_Nclusters)
+
+
+png(figurePath(paste0("old.cluster.ident.png"))
+    ,width = 11, height = 9, units = "in", res = 300)
+DimPlot(mphg_homeo, reduction = "umap", pt.size = 0.20,
+         label = TRUE, label.size = 4, group.by   = "cell.type.ident", cols = gg_color_hue(16)) 
+dev.off()

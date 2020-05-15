@@ -160,7 +160,10 @@ dev.off()
 # =========================================================== Generate Heatmaps  ===========================================================
 
 top100 <- all.markers %>% group_by(cluster) %>% top_n(n = 100, wt = avg_logFC)
+png(figurePath(paste0("heatmap.allmarkers.png"))
+    ,width = 20, height = 100, units = "in", res = 300)
 DoHeatmap(mphg_homeo, features = top100$gene) + NoLegend()
+dev.off()
 
 
 homeo.cluster.ident <- strsplit(unique(as.character(meta$homeo.cell.type.ident)), split = "[][']|,\\s*")
@@ -188,11 +191,22 @@ for (x in 1:length(homeo.cluster.ident)){
 names(homeo.cluster.list) <- paste(homeo.cluster.ident)
 names(top100_list) <- paste(homeo.cluster.ident)
 
-homeo.cluster.list$mcamb %>% group_by(Gene.name.uniq) %>% top_n(n = 100, wt = avg_logFC)
+# =========================================================== export  ===========================================================
 
-top100_list$`top100_ mcamb`
+write_xlsx(list("mcamb" = homeo.cluster.list$mcamb,
+                "rpb4" = homeo.cluster.list$rbp4,
+                "fabp3" = homeo.cluster.list$fabp3,
+                "irg1" = homeo.cluster.list$irg1,
+                "tspan10" = homeo.cluster.list$tspan10,
+                "eomesa" = homeo.cluster.list$eomesa,
+                "pcna" = homeo.cluster.list$pcna,
+                "cldnh" = homeo.cluster.list$cldnh,
+                "runx3" = homeo.cluster.list$runx3,
+                "f13a1b" = homeo.cluster.list$f13a1b,
+                "stat1b" = homeo.cluster.list$stat1b,
+                "spock3" = homeo.cluster.list$spock3,
+                "hmgn2" = homeo.cluster.list$hmgn2,
+                "mpx" = homeo.cluster.list$mpx,
+                "krt4" = homeo.cluster.list$krt4,
+                "gata3" = homeo.cluster.list$gata3), path = "./mphg_homeo_figures/gene_tabl_by_cluster/gene_table_by_cluster.xlsx")
 
-x <-homeo.cluster.list$mcamb[order( homeo.cluster.list$mcamb[,3], decreasing = TRUE),]
-
-x %>% top_n(n = 100, wt = avg_logFC)
-x[order( x[,3], decreasing = TRUE),]

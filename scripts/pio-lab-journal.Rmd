@@ -24,6 +24,8 @@ library(cowplot)
 # library(ggrepel)
 library(ggrepel)
 library(DT)
+library(knitr)
+library(kableExtra)
 
 
 #setwd("scripts")
@@ -33,7 +35,11 @@ library(DT)
 
 * Clustering and annotation of 10X homeo isl1 sibling data
 
-* Integration with smartseq2 data, with 2 replicates, and 2 treatments: homeo and 1hr
+* Integration of 3 other homeo 10X data to differentiate the AP - DV Pole signal
+
+* Integration with smartseq2 data and 2 treatments: homeo and 1hr
+
+* Differential gene expression of smartseq cells, post annotation of integrated object
 
 
 # Results {.tabset .tabset-pills}
@@ -305,7 +311,7 @@ Resolved by implementing the following:
 **Top 10 Differentially Expressed Genes in Central cells at 1hr Vs. Homeo**
 
 ```{r, eval=FALSE}
-kable(head(read.table(file = '../data/central.dge.df.tsv', sep = '\t', header = T),10))
+head(read.table(file = '../data/central.dge.df.tsv', sep = '\t', header = T),10)
 ```
 
 ![Central Cells TOP DGE ViolinPlot](integ_DGE_figures/central.dge.vln.png)
@@ -635,132 +641,130 @@ table(Idents(obj_integrated_fpkm), obj_integrated_fpkm$data.set)
 
 ![filtered, integrated umap](adj_fpkm_1828_smartseq_integ_figures/filtered.annotated.clusters.png)
 
-
 ## Week of May 11th - Differential Gene Expression b/t 1hr and Homeo Treatment {.tabset}
 
 Here, we compare differential gene expression between the 1hr and the Homeo treatment with comparative analysis to Sungmin's regeneration shiny app.
 
 ### Amp-SCs {.tabset}
 
+```{r, out.width="49%",out.height="20%",,fig.cap="caption", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("integ_DGE_figures/volcanoplot.amp-SCs.sungmin.regen.png","integ_DGE_figures/volcanoplot.amp-SCs.smartseq2.png"))
+```
+
+
 ```{r}
-library(png)
-library(grid)
-library(gridExtra)
 
 load("../data/integ_DGE.RData")
-img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.amp-SCs.sungmin.regen.png")), interpolate = FALSE)
-img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.amp-SCs.smartseq2.png")), interpolate = FALSE)
-grid.arrange(img1, img2, ncol = 2)
 
 datatable(merged.data$`amp-SCs`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 
 ```
 
+
+
 ### AP-cells {.tabset}
 
+
+```{r, out.width="49%",out.height="20%",,fig.cap="caption", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("integ_DGE_figures/volcanoplot.AP-cells.sungmin.regen.png","integ_DGE_figures/volcanoplot.AP-cells.smartseq2.png"))
+```
+
+
 ```{r}
-library(png)
-library(grid)
-library(gridExtra)
-img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.AP-cells.sungmin.regen.png")), interpolate = FALSE)
-img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.AP-cells.smartseq2.png")), interpolate = FALSE)
-grid.arrange(img1, img2, ncol = 2)
 
 datatable(merged.data$`AP-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### Central-cells {.tabset}
 
-```{r}
-library(png)
-library(grid)
-library(gridExtra)
-img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.central-cells.sungmin.regen.png")), interpolate = FALSE)
-img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.central-cells.smartseq2.png")), interpolate = FALSE)
-grid.arrange(img1, img2, ncol = 2)
 
-  datatable(merged.data$`central-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
+```{r, out.width="49%",out.height="20%",,fig.cap="caption", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("integ_DGE_figures/volcanoplot.central-cells.sungmin.regen.png","integ_DGE_figures/volcanoplot.central-cells.smartseq2.png"))
+```
+
+
+```{r}
+
+datatable(merged.data$`central-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 
 ### DV-cells {.tabset}
 
-```{r}
-library(png)
-library(grid)
-library(gridExtra)
-img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.DV-cells.sungmin.regen.png")), interpolate = FALSE)
-img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.DV-cells.smartseq2.png")), interpolate = FALSE)
-grid.arrange(img1, img2, ncol = 2)
+```{r, out.width="49%",out.height="20%",,fig.cap="caption", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("integ_DGE_figures/volcanoplot.DV-cells.sungmin.regen.png","integ_DGE_figures/volcanoplot.DV-cells.smartseq2.png"))
+```
 
-  datatable(merged.data$`DV-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
+
+```{r}
+datatable(merged.data$`DV-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### early-HCs {.tabset}
 
-```{r}
-library(png)
-library(grid)
-library(gridExtra)
-img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.early-HCs.sungmin.regen.png")), interpolate = FALSE)
-img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.early-HCs.smartseq2.png")), interpolate = FALSE)
-grid.arrange(img1, img2, ncol = 2)
+```{r, out.width="49%",out.height="20%",,fig.cap="caption", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("integ_DGE_figures/volcanoplot.early-HCs.sungmin.regen.png","integ_DGE_figures/volcanoplot.early-HCs.smartseq2.png"))
+```
 
+```{r}
 datatable(merged.data$`early-HCs`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### HC-prog {.tabset}
 
+```{r, out.width="49%",out.height="20%",,fig.cap="caption", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("integ_DGE_figures/volcanoplot.HC-prog.sungmin.regen.png","integ_DGE_figures/volcanoplot.HC-prog.smartseq2.png"))
+```
+
 ```{r}
-library(png)
-library(grid)
-library(gridExtra)
-img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.HC-prog.sungmin.regen.png")), interpolate = FALSE)
-img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.HC-prog.smartseq2.png")), interpolate = FALSE)
-grid.arrange(img1, img2, ncol = 2)
 
 datatable(merged.data$`HC-prog`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### Inm {.tabset}
 
-```{r}
-library(png)
-library(grid)
-library(gridExtra)
-img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.Inm.sungmin.regen.png")), interpolate = FALSE)
-img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.Inm.smartseq2.png")), interpolate = FALSE)
-grid.arrange(img1, img2, ncol = 2)
+```{r, out.width="49%",out.height="20%",,fig.cap="caption", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("integ_DGE_figures/volcanoplot.Inm.sungmin.regen.png","integ_DGE_figures/volcanoplot.Inm.smartseq2.png"))
+```
 
+```{r}
 datatable(merged.data$Inm, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### mantle-cells {.tabset}
 
+```{r, out.width="49%",out.height="20%",,fig.cap="caption", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("integ_DGE_figures/volcanoplot.mantle-cells.sungmin.regen.png","integ_DGE_figures/volcanoplot.mantle-cells.smartseq2.png"))
+```
+
 ```{r}
-library(png)
-library(grid)
-library(gridExtra)
-img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mantle-cells.sungmin.regen.png")), interpolate = FALSE)
-img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mantle-cells.smartseq2.png")), interpolate = FALSE)
-grid.arrange(img1, img2, ncol = 2)
 
 datatable(merged.data$`mantle-cells`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
 ```
 
 ### mature-HCs {.tabset}
 
-```{r}
-library(png)
-library(grid)
-library(gridExtra)
-img1 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mature-HCs.sungmin.regen.png")), interpolate = FALSE)
-img2 <-  rasterGrob(as.raster(readPNG("integ_DGE_figures/volcanoplot.mature-HCs.smartseq2.png")), interpolate = FALSE)
-grid.arrange(img1, img2, ncol = 2)
-
-datatable(merged.data$`mature-HCs`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T))
+```{r, out.width="49%",out.height="20%",,fig.cap="caption", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("integ_DGE_figures/volcanoplot.mature-HCs.sungmin.regen.png","integ_DGE_figures/volcanoplot.mature-HCs.smartseq2.png"))
 ```
 
+```{r}
+
+datatable(merged.data$`mature-HCs`, rownames = FALSE, filter="top", options = list(pageLength = 10, scrollX=T)) 
+```
+
+### Analysis {.tabset}
+
+```{r}
+kable(table(obj_integrated_filtered$data.set),col.names = c("data.set", "freq")) %>%kable_styling(font_size = 7)
+kable(table(Idents(obj_integrated_filtered), obj_integrated_filtered$data.set)) %>%kable_styling(font_size = 7)
+
+
+smrtseq_filtered <- subset(obj_integrated_filtered, subset = seq.method == "smartseq2")
+DefaultAssay(smrtseq_filtered) <- "RNA"
+VlnPlot(smrtseq_filtered, features = c("nFeature_RNA"), pt.size = 0.0) +ggtitle("Gene Count Per Cluster in Smartseq Cells")
+
+```
 
 # {-}
 

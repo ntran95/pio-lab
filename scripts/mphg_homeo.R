@@ -159,10 +159,16 @@ dev.off()
 
 # =========================================================== Generate Heatmaps  ===========================================================
 
+#reorder cluster ident, per Tatjana's request
+mphg_homeo_reordered <- mphg_homeo
+my_levels <- c( "krt4", "hmgn2", "gata3", "rbp4", "cldnh", "spock3", "eomesa", "mpx", "pcna", "fabp3", "f13a1b", "mcamb", "tspan10", "runx3", "irg1", "stat1b")
+Idents(mphg_homeo_reordered) <- factor(Idents(mphg_homeo_reordered), levels= my_levels)
+
+#plot top 100
 top100 <- all.markers %>% group_by(cluster) %>% top_n(n = 100, wt = avg_logFC)
 png(figurePath(paste0("heatmap.allmarkers.png"))
-    ,width = 20, height = 100, units = "in", res = 300)
-DoHeatmap(mphg_homeo, features = top100$gene) + NoLegend()
+    ,width = 30, height = 100, units = "in", res = 300)
+DoHeatmap(mphg_homeo_reordered, features = top100$gene) + NoLegend()
 dev.off()
 
 

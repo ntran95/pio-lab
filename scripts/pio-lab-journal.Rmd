@@ -766,6 +766,86 @@ VlnPlot(smrtseq_filtered, features = c("nFeature_RNA"), pt.size = 0.0) +ggtitle(
 
 ```
 
+## Week of May 17th - Macrophage Homeo Dataset {.tabset}
+
+* Here, we will isolate and recluster homeostatic data from the integrated macrophage dataset and generate heatmaps of the top 100 differentially expressed genes from each cluster identity.
+
+* The differential gene table for each cluster identity is extracted as a single excel file- identities separated by sheets for convenience. The link is located [here](https://webfs/n/projects/nt2473/data/macrophage_data/mphg_homeo_figures/gene_tabl_by_cluster/)
+
+### UMAP {.tabset}
+
+![UMAP annotated](mphg_homeo_figures/annotated.umap.png)
+
+### cldnh {.tabset}
+
+![top 100, cldnh](mphg_homeo_figures/heatmap.cldnh.png)
+
+
+### eomesa {.tabset}
+
+![top 100, eomesa](mphg_homeo_figures/heatmap.eomesa.png)
+
+### f13a1b {.tabset}
+
+![top 100, f13a1b](mphg_homeo_figures/heatmap.f13a1b.png)
+
+### fabp3 {.tabset}
+
+![top 100, fabp3](mphg_homeo_figures/heatmap.fabp3.png)
+
+### gata3 {.tabset}
+
+![top 100, gata3](mphg_homeo_figures/heatmap.gata3.png)
+
+
+### hmgn2 {.tabset}
+
+![top 100, hmgn2](mphg_homeo_figures/heatmap.hmgn2.png)
+
+### irg1 {.tabset}
+
+![top 100, irg1](mphg_homeo_figures/heatmap.irg1.png)
+
+
+### krt4 {.tabset}
+
+![top 100, krt4](mphg_homeo_figures/heatmap.krt4.png)
+
+
+### mcamb {.tabset}
+
+![top 100, mcamb](mphg_homeo_figures/heatmap.mcamb.png)
+
+### mpx {.tabset}
+
+![top 100, mpx](mphg_homeo_figures/heatmap.mpx.png)
+
+### pcna {.tabset}
+
+![top 100, pcna](mphg_homeo_figures/heatmap.pcna.png)
+
+
+### rbp4 {.tabset}
+
+![top 100, rbp4](mphg_homeo_figures/heatmap.rbp4.png)
+
+### runx3 {.tabset}
+
+![top 100, runx3](mphg_homeo_figures/heatmap.runx3.png)
+
+
+### spock3 {.tabset}
+
+![top 100, spock3](mphg_homeo_figures/heatmap.spock3.png)
+
+### stat1b {.tabset}
+
+![top 100, stat1b](mphg_homeo_figures/heatmap.stat1b.png)
+
+### tspan10 {.tabset}
+
+![top 100, tspan10](mphg_homeo_figures/heatmap.tspan10.png)
+
 # {-}
 
 

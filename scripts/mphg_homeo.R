@@ -159,20 +159,6 @@ dev.off()
 
 # =========================================================== Generate Heatmaps  ===========================================================
 
-#reorder cluster ident, per Tatjana's request
-mphg_homeo_reordered <- mphg_homeo
-my_levels <- c( "krt4", "hmgn2", "gata3", "rbp4", "cldnh", "spock3", "eomesa", "mpx", "pcna", "fabp3", "f13a1b", "mcamb", "tspan10", "runx3", "irg1", "stat1b")
-Idents(mphg_homeo_reordered) <- factor(Idents(mphg_homeo_reordered), levels= my_levels)
-all.markers.reordered <- FindAllMarkers(mphg_homeo_reordered)
-
-#plot top 100
-top100 <- all.markers.reordered %>% group_by(cluster) %>% top_n(n = 100, wt = avg_logFC)
-png(figurePath(paste0("heatmap.allmarkers.png"))
-    ,width = 30, height = 100, units = "in", res = 300)
-DoHeatmap(mphg_homeo_reordered, features = top100$gene) + NoLegend()
-dev.off()
-
-
 homeo.cluster.ident <- strsplit(unique(as.character(meta$homeo.cell.type.ident)), split = "[][']|,\\s*")
 homeo.cluster.list <- vector(mode = "list", length = length(homeo.cluster.ident))
 top100_list <- vector(mode = "list", length = length(homeo.cluster.ident))
@@ -198,6 +184,31 @@ for (x in 1:length(homeo.cluster.ident)){
 names(homeo.cluster.list) <- paste(homeo.cluster.ident)
 names(top100_list) <- paste(homeo.cluster.ident)
 
+
+
+#reorder cluster ident, per Tatjana's request
+mphg_homeo_reordered <- mphg_homeo
+my_levels <- c( "krt4", "hmgn2", "gata3", "rbp4", "cldnh", "spock3", "eomesa", "mpx", "pcna", "fabp3", "f13a1b", "mcamb", "tspan10", "runx3", "irg1", "stat1b")
+Idents(mphg_homeo_reordered) <- factor(Idents(mphg_homeo_reordered), levels= my_levels)
+all.markers.reordered <- FindAllMarkers(mphg_homeo_reordered)
+
+#plot top 100
+#top100 <- all.markers.reordered %>% group_by(cluster) %>% top_n(n = 100, wt = avg_logFC)
+top100 <- list()
+for (i in my_levels){
+  top100_by_cluster <- print(head(top100_list[[i]]$Gene.name.uniq,100))
+  top100[[paste0(i)]] <- top100_by_cluster
+}
+top100 <- c(top100$krt4, top100$hmgn2, top100$gata3, top100$rbp4, top100$cldnh, top100$spock3, top100$eomesa,
+            top100$mpx, top100$pcna, top100$fabp3, top100$f13a1b, top100$mcamb, top100$tspan10, top100$runx3,
+            top100$irg1, top100$stat1b)
+png(figurePath(paste0("heatmap.allmarkers.png"))
+    ,width = 30, height = 100, units = "in", res = 300)
+DoHeatmap(mphg_homeo_reordered, features = top100) + NoLegend()
+dev.off()
+
+
+save.image("../data/mphg_homeo.RData")
 # =========================================================== export  ===========================================================
 
 write_xlsx(list("mcamb" = homeo.cluster.list$mcamb,
